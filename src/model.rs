@@ -2,6 +2,11 @@ use async_graphql::{ComplexObject, SimpleObject};
 use sqlx::types::Uuid;
 use sqlx::FromRow;
 
+#[derive(FromRow)]
+pub struct RowId {
+    pub id: Uuid
+}
+
 #[derive(Clone, FromRow, SimpleObject)]
 #[graphql(complex)]
 pub struct User {

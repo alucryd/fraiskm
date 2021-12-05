@@ -10,9 +10,7 @@ use super::database::*;
 use super::model::*;
 use async_ctrlc::CtrlC;
 use async_graphql::dataloader::{DataLoader, Loader};
-use async_graphql::{
-    ComplexObject, Context, EmptyMutation, EmptySubscription, Error, Object, Result, Schema,
-};
+use async_graphql::{EmptySubscription, Error, Object, Result, Schema};
 use async_std::path::Path;
 use async_std::prelude::FutureExt;
 use async_trait::async_trait;
@@ -93,9 +91,31 @@ impl QueryRoot {
     }
 }
 
+struct Mutation;
+
+#[Object]
+impl Mutation {
+    async fn signup(&self, username: String, password: String) -> Result<Uuid> {
+        Ok(create_user(
+            &mut POOL.get().unwrap().acquire().await.unwrap(),
+            &username,
+            &blake3::hash(password.as_bytes()).to_hex(),
+        )
+        .await)
+    }
+
+    async fn login(&self, username: String, password: String) -> Result<bool> {
+        let user =
+            find_user_by_username(&mut POOL.get().unwrap().acquire().await.unwrap(), &username)
+                .await;
+        let password_hash = blake3::hash(password.as_bytes()).to_hex();
+        Ok(user.password_hash == password_hash.to_string())
+    }
+}
+
 #[derive(Clone)]
 struct AppState {
-    schema: Schema<QueryRoot, EmptyMutation, EmptySubscription>,
+    schema: Schema<QueryRoot, Mutation, EmptySubscription>,
 }
 
 async fn serve_asset(req: tide::Request<()>) -> tide::Result {
@@ -122,8 +142,8 @@ async fn serve_asset(req: tide::Request<()>) -> tide::Result {
 pub async fn main(pool: PgPool, matches: &ArgMatches<'_>) -> SimpleResult<()> {
     POOL.set(pool).expect("Failed to set database pool");
 
-    let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
-        .data(DataLoader::new(UserLoader))
+    let schema = Schema::build(QueryRoot, Mutation, EmptySubscription)
+        .data(DataLoader::new(UserLoader, async_std::task::spawn))
         .finish();
 
     let ctrlc = CtrlC::new().expect("Cannot use CTRL-C handler");

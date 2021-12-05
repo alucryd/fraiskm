@@ -3,8 +3,8 @@ use sqlx::migrate::Migrator;
 use sqlx::postgres::{PgConnection, PgPool, PgPoolOptions};
 use sqlx::prelude::*;
 // use sqlx::types::Uuid;
-use uuid::Uuid;
 use sqlx::{Acquire, Postgres, Transaction};
+use uuid::Uuid;
 
 static MIGRATOR: Migrator = sqlx::migrate!();
 
@@ -47,18 +47,20 @@ pub async fn create_user(
     connection: &mut PgConnection,
     username: &str,
     password_hash: &str,
-) {
-    sqlx::query!(
+) -> Uuid {
+    sqlx::query_as!(
+        RowId,
         "
         INSERT INTO users (username, password_hash)
         VALUES ($1, $2)
-        ",
+        RETURNING id",
         username,
         password_hash,
     )
-    .execute(connection)
+    .fetch_one(connection)
     .await
-    .expect("Error while creating user");
+    .unwrap_or_else(|_| panic!("Error while creating user with username {}", username))
+    .id
 }
 
 pub async fn update_user_password(

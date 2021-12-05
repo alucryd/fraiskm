@@ -1,14 +1,11 @@
 extern crate async_std;
+extern crate blake3;
 extern crate clap;
 extern crate dotenv;
 extern crate futures;
-#[macro_use]
-extern crate lazy_static;
 extern crate once_cell;
 extern crate serde;
 extern crate sqlx;
-#[macro_use]
-extern crate simple_error;
 extern crate rayon;
 extern crate surf;
 

@@ -57,19 +57,6 @@
       "nullable": []
     }
   },
-  "c4f07f9b4b3a9ac22eed943facc9b7b280e4c47a8596d05ced357f6cb4c3e9a9": {
-    "query": "\n        INSERT INTO users (username, password_hash)\n        VALUES ($1, $2)\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar"
-        ]
-      },
-      "nullable": []
-    }
-  },
   "e951e6f127e7bdd649b606d4224d8ceb5a5299d5cd98bf4918cb79df7d59e587": {
     "query": "\n        SELECT *\n        FROM users\n        ORDER BY username\n        ",
     "describe": {
@@ -96,6 +83,27 @@
       "nullable": [
         false,
         false,
+        false
+      ]
+    }
+  },
+  "fc8e699a3318d1193da76b23e52a068ca0b44eb1b77909b5c646e19da70dce65": {
+    "query": "\n        INSERT INTO users (username, password_hash)\n        VALUES ($1, $2)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": [
         false
       ]
     }
