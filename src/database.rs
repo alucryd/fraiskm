@@ -128,3 +128,63 @@ pub async fn delete_user_by_username(connection: &mut PgConnection, username: &s
     .await
     .unwrap_or_else(|_| panic!("Error while deleting user with username {}", username));
 }
+
+pub async fn create_person(connection: &mut PgConnection, name: &[u8], user_id: &Uuid) -> Uuid {
+    sqlx::query_as!(
+        RowId,
+        "
+        INSERT INTO people (name, user_id)
+        VALUES ($1, $2)
+        RETURNING id",
+        name,
+        user_id,
+    )
+    .fetch_one(connection)
+    .await
+    .expect("Error while creating person")
+    .id
+}
+
+pub async fn update_person(connection: &mut PgConnection, id: &Uuid, name: &[u8]) {
+    sqlx::query!(
+        "
+        UPDATE people
+        SET name = $2
+        WHERE id = $1
+        ",
+        id,
+        name,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while updating person with id {}", id));
+}
+
+pub async fn find_people_by_user_id(connection: &mut PgConnection, user_id: &Uuid) -> Vec<Person> {
+    sqlx::query_as!(
+        Person,
+        "
+        SELECT *
+        FROM people
+        WHERE user_id = $1
+        ORDER BY name
+        ",
+        user_id
+    )
+    .fetch_all(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while finding people with user_id {}", user_id))
+}
+
+pub async fn delete_person_by_id(connection: &mut PgConnection, id: &Uuid) {
+    sqlx::query!(
+        "
+        DELETE FROM people
+        WHERE id = $1
+        ",
+        id,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while deleting person with id {}", id));
+}

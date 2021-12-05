@@ -1,10 +1,10 @@
-use async_graphql::{ComplexObject, SimpleObject};
+use async_graphql::SimpleObject;
 use sqlx::types::Uuid;
 use sqlx::FromRow;
 
 #[derive(FromRow)]
 pub struct RowId {
-    pub id: Uuid
+    pub id: Uuid,
 }
 
 #[derive(Clone, FromRow, SimpleObject)]
@@ -15,5 +15,9 @@ pub struct User {
     pub password_hash: String,
 }
 
-#[ComplexObject]
-impl User {}
+#[derive(Clone, FromRow, SimpleObject)]
+pub struct Person {
+    pub id: Uuid,
+    pub name: Vec<u8>,
+    pub user_id: Uuid,
+}

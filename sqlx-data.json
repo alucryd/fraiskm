@@ -1,5 +1,18 @@
 {
   "db": "PostgreSQL",
+  "2bd766997ec636920286704862a606b3bbd2d38d4ac809df906b944fda4a217d": {
+    "query": "\n        UPDATE people\n        SET name = $2\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "3bf08be10ef97b209337773e69d2c8121f0c56e6714297a696e1f2e2f705a109": {
     "query": "\n        SELECT *\n        FROM users\n        WHERE username = $1\n        ",
     "describe": {
@@ -55,6 +68,71 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "969681d85372ace3a26955273b3c4b5a10a1040fa3e0a22e4ea5820006d9db4a": {
+    "query": "\n        DELETE FROM people\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "9fed28fe53860e7143b7ab837187e17de7a2bd7a9bad4b8734a6eb1ec0308227": {
+    "query": "\n        SELECT *\n        FROM people\n        WHERE user_id = $1\n        ORDER BY name\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "b6f2e3a7ce6fed49f2de7ac41c2b9a8b0e2b243efb6f982f9549b94a83cc441f": {
+    "query": "\n        INSERT INTO people (name, user_id)\n        VALUES ($1, $2)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Bytea",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
     }
   },
   "e951e6f127e7bdd649b606d4224d8ceb5a5299d5cd98bf4918cb79df7d59e587": {

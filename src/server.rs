@@ -1,33 +1,22 @@
-extern crate async_ctrlc;
-extern crate async_graphql;
-extern crate async_graphql_tide;
-extern crate async_trait;
-extern crate http_types;
-extern crate rust_embed;
-extern crate tide;
-
 use super::database::*;
 use super::model::*;
 use async_ctrlc::CtrlC;
-use async_graphql::dataloader::{DataLoader, Loader};
-use async_graphql::{EmptySubscription, Error, Object, Result, Schema};
+use async_graphql::{ComplexObject, Context, EmptySubscription, Object, Result, Schema};
 use async_std::path::Path;
 use async_std::prelude::FutureExt;
-use async_trait::async_trait;
 use clap::{App, Arg, ArgMatches, SubCommand};
-use futures::stream::TryStreamExt;
 use http_types::mime::BYTE_STREAM;
 use http_types::{Mime, StatusCode};
-use itertools::Itertools;
 use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
 use rust_embed::RustEmbed;
 use simple_error::SimpleResult;
 use sqlx::postgres::PgPool;
-use std::collections::HashMap;
+use tindercrypt::cryptors::RingCryptor;
 use uuid::Uuid;
 
 lazy_static! {
+    static ref CRYPTOR: RingCryptor<'static> = RingCryptor::new();
     static ref POOL: OnceCell<PgPool> = OnceCell::new();
 }
 
@@ -58,27 +47,13 @@ pub fn subcommand<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-pub struct UserLoader;
-
-#[async_trait]
-impl Loader<Uuid> for UserLoader {
-    type Value = User;
-    type Error = Error;
-
-    async fn load(&self, ids: &[Uuid]) -> Result<HashMap<Uuid, Self::Value>, Self::Error> {
-        let query = format!(
-            "
-        SELECT *
-        FROM users
-        WHERE id in ({})
-        ",
-            ids.iter().join(",")
-        );
-        Ok(sqlx::query_as(&query)
-            .fetch(&mut POOL.get().unwrap().acquire().await.unwrap())
-            .map_ok(|user: User| (user.id, user))
-            .try_collect()
-            .await?)
+#[ComplexObject]
+impl User {
+    async fn people(&self, _ctx: &Context<'_>) -> Result<Vec<Person>> {
+        Ok(
+            find_people_by_user_id(&mut POOL.get().unwrap().acquire().await.unwrap(), &self.id)
+                .await,
+        )
     }
 }
 
@@ -111,6 +86,15 @@ impl Mutation {
         let password_hash = blake3::hash(password.as_bytes()).to_hex();
         Ok(user.password_hash == password_hash.to_string())
     }
+
+    async fn add_person(&self, name: String, user_id: Uuid, password: String) -> Result<Uuid> {
+        Ok(create_person(
+            &mut POOL.get().unwrap().acquire().await.unwrap(),
+            &CRYPTOR.seal_with_passphrase(password.as_bytes(), name.as_bytes())?,
+            &user_id,
+        )
+        .await)
+    }
 }
 
 #[derive(Clone)]
@@ -142,9 +126,7 @@ async fn serve_asset(req: tide::Request<()>) -> tide::Result {
 pub async fn main(pool: PgPool, matches: &ArgMatches<'_>) -> SimpleResult<()> {
     POOL.set(pool).expect("Failed to set database pool");
 
-    let schema = Schema::build(QueryRoot, Mutation, EmptySubscription)
-        .data(DataLoader::new(UserLoader, async_std::task::spawn))
-        .finish();
+    let schema = Schema::build(QueryRoot, Mutation, EmptySubscription).finish();
 
     let ctrlc = CtrlC::new().expect("Cannot use CTRL-C handler");
     ctrlc
