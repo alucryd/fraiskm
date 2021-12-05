@@ -1,0 +1,103 @@
+{
+  "db": "PostgreSQL",
+  "3bf08be10ef97b209337773e69d2c8121f0c56e6714297a696e1f2e2f705a109": {
+    "query": "\n        SELECT *\n        FROM users\n        WHERE username = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "password_hash",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "4c36bdb0261aeb4da4bffd64b232ac9080fd52c31171750e827ae034ac18aaf3": {
+    "query": "\n        DELETE FROM users\n        WHERE username = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "6040b293de37676cdd80179be2c1775a85062176f8ec09209051a75ccc2b52c3": {
+    "query": "\n        UPDATE users\n        SET password_hash = $2\n        WHERE username = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "c4f07f9b4b3a9ac22eed943facc9b7b280e4c47a8596d05ced357f6cb4c3e9a9": {
+    "query": "\n        INSERT INTO users (username, password_hash)\n        VALUES ($1, $2)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "e951e6f127e7bdd649b606d4224d8ceb5a5299d5cd98bf4918cb79df7d59e587": {
+    "query": "\n        SELECT *\n        FROM users\n        ORDER BY username\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "password_hash",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  }
+}
