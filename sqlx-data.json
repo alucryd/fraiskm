@@ -60,6 +60,19 @@
       ]
     }
   },
+  "28936c650a98d91aec100a60cdd35c09c78aabc9cd7b9ada9a433c5314bf9578": {
+    "query": "\n        DELETE FROM distances\n        WHERE from_id = $1\n        AND to_id = $2\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "2bd766997ec636920286704862a606b3bbd2d38d4ac809df906b944fda4a217d": {
     "query": "\n        UPDATE people\n        SET name = $2\n        WHERE id = $1\n        ",
     "describe": {
@@ -157,6 +170,20 @@
       "nullable": []
     }
   },
+  "4121a6316f1f9399b683fe4ff9ddeb0bc58dc5982c130a4f7bd6d65fdcfd1c3d": {
+    "query": "\n        INSERT INTO distances (from_id, to_id, meters)\n        VALUES ($1, $2, $3)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "433e6ac7c4c9a7059f1e5894b392274f854514923c673d681fadff90db304bfb": {
     "query": "\n        SELECT *\n        FROM users\n        WHERE id = $1\n        ",
     "describe": {
@@ -179,6 +206,39 @@
       ],
       "parameters": {
         "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "4899aa13d3dd8420eab00249baf00f7ef85041bd85afb0584574fb538cebcfa5": {
+    "query": "\n        SELECT *\n        FROM distances\n        WHERE from_id = $1\n        AND to_id = $2\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "from_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "to_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "meters",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
           "Uuid"
         ]
       },
@@ -308,6 +368,20 @@
       "parameters": {
         "Left": [
           "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "cf6ea27179e543715eaa00a6f19d04d2c6c8d4c8314caebc120135bfb8c29bc6": {
+    "query": "\n        UPDATE distances\n        SET meters = $3\n        WHERE from_id = $1\n        AND to_id = $2\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Int4"
         ]
       },
       "nullable": []

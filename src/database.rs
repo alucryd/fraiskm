@@ -349,3 +349,102 @@ pub async fn delete_person_by_id(connection: &mut PgConnection, id: &Uuid) -> u6
     .unwrap_or_else(|_| panic!("Error while deleting person with id {}", id))
     .rows_affected()
 }
+
+pub async fn create_distance(
+    connection: &mut PgConnection,
+    from_id: &Uuid,
+    to_id: &Uuid,
+    meters: i32,
+) -> u64 {
+    sqlx::query!(
+        "
+        INSERT INTO distances (from_id, to_id, meters)
+        VALUES ($1, $2, $3)",
+        from_id,
+        to_id,
+        meters,
+    )
+    .execute(connection)
+    .await
+    .expect("Error while creating distance")
+    .rows_affected()
+}
+
+pub async fn update_distance(
+    connection: &mut PgConnection,
+    from_id: &Uuid,
+    to_id: &Uuid,
+    meters: i32,
+) -> u64 {
+    sqlx::query!(
+        "
+        UPDATE distances
+        SET meters = $3
+        WHERE from_id = $1
+        AND to_id = $2
+        ",
+        from_id,
+        to_id,
+        meters,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| {
+        panic!(
+            "Error while updating distance with ids {} and {}",
+            from_id, to_id
+        )
+    })
+    .rows_affected()
+}
+
+pub async fn find_distance_by_ids(
+    connection: &mut PgConnection,
+    from_id: &Uuid,
+    to_id: &Uuid,
+) -> Option<Distance> {
+    sqlx::query_as!(
+        Distance,
+        "
+        SELECT *
+        FROM distances
+        WHERE from_id = $1
+        AND to_id = $2
+        ",
+        from_id,
+        to_id,
+    )
+    .fetch_optional(connection)
+    .await
+    .unwrap_or_else(|_| {
+        panic!(
+            "Error while finding distance with ids {} and {}",
+            from_id, to_id
+        )
+    })
+}
+
+pub async fn delete_distance_by_ids(
+    connection: &mut PgConnection,
+    from_id: &Uuid,
+    to_id: &Uuid,
+) -> u64 {
+    sqlx::query!(
+        "
+        DELETE FROM distances
+        WHERE from_id = $1
+        AND to_id = $2
+        ",
+        from_id,
+        to_id,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| {
+        panic!(
+            "Error while deleting distances with ids {} and {}",
+            from_id, to_id
+        )
+    })
+    .rows_affected()
+}

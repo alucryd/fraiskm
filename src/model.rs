@@ -99,3 +99,23 @@ impl PersonObject {
         }
     }
 }
+
+#[derive(FromRow)]
+pub struct Distance {
+    pub from_id: Uuid,
+    pub to_id: Uuid,
+    pub meters: i32,
+}
+
+#[derive(SimpleObject)]
+pub struct DistanceObject {
+    pub meters: i32,
+}
+
+impl DistanceObject {
+    pub fn from_db(distance: Distance) -> DistanceObject {
+        DistanceObject {
+            meters: distance.meters,
+        }
+    }
+}

@@ -100,7 +100,6 @@ impl Mutation {
     }
 
     async fn delete_address(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         Ok(delete_address_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
@@ -143,7 +142,6 @@ impl Mutation {
     }
 
     async fn delete_car(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         Ok(delete_car_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
@@ -178,10 +176,57 @@ impl Mutation {
     }
 
     async fn delete_person(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         Ok(delete_person_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
+        )
+        .await)
+    }
+
+    async fn create_distance(
+        &self,
+        ctx: &Context<'_>,
+        from_id: Uuid,
+        to_id: Uuid,
+        meters: i32,
+    ) -> Result<u64> {
+        Ok(create_distance(
+            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+            &from_id,
+            &to_id,
+            meters,
+        )
+        .await)
+    }
+
+    async fn update_distance(
+        &self,
+        ctx: &Context<'_>,
+        from_id: Uuid,
+        to_id: Uuid,
+        meters: i32,
+    ) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        Ok(update_distance(
+            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+            &from_id,
+            &to_id,
+            meters,
+        )
+        .await)
+    }
+
+    async fn delete_distance(
+        &self,
+        ctx: &Context<'_>,
+        from_id: Uuid,
+        to_id: Uuid,
+        meters: i32,
+    ) -> Result<u64> {
+        Ok(delete_distance_by_ids(
+            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+            &from_id,
+            &to_id,
         )
         .await)
     }

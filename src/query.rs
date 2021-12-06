@@ -78,4 +78,19 @@ impl QueryRoot {
                 .collect(),
         )
     }
+
+    async fn distance(
+        &self,
+        ctx: &Context<'_>,
+        from_id: Uuid,
+        to_id: Uuid,
+    ) -> Result<Option<DistanceObject>> {
+        Ok(find_distance_by_ids(
+            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+            &from_id,
+            &to_id,
+        )
+        .await
+        .map(|distance| DistanceObject::from_db(distance)))
+    }
 }
