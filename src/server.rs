@@ -1,24 +1,16 @@
-use super::database::*;
-use super::model::*;
-use async_ctrlc::CtrlC;
-use async_graphql::{ComplexObject, Context, EmptySubscription, Object, Result, Schema};
+use super::mutation::Mutation;
+use super::query::QueryRoot;
+use async_graphql::{EmptySubscription, Schema};
 use async_std::path::Path;
-use async_std::prelude::FutureExt;
+use async_std::sync::{Arc, Mutex};
 use clap::{App, Arg, ArgMatches, SubCommand};
 use http_types::mime::BYTE_STREAM;
 use http_types::{Mime, StatusCode};
-use lazy_static::lazy_static;
-use once_cell::sync::OnceCell;
 use rust_embed::RustEmbed;
 use simple_error::SimpleResult;
 use sqlx::postgres::PgPool;
+use tide::sessions::{MemoryStore, SessionMiddleware};
 use tindercrypt::cryptors::RingCryptor;
-use uuid::Uuid;
-
-lazy_static! {
-    static ref CRYPTOR: RingCryptor<'static> = RingCryptor::new();
-    static ref POOL: OnceCell<PgPool> = OnceCell::new();
-}
 
 #[derive(RustEmbed)]
 #[folder = "public/"]
@@ -47,63 +39,8 @@ pub fn subcommand<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-#[ComplexObject]
-impl User {
-    async fn people(&self, _ctx: &Context<'_>) -> Result<Vec<Person>> {
-        Ok(
-            find_people_by_user_id(&mut POOL.get().unwrap().acquire().await.unwrap(), &self.id)
-                .await,
-        )
-    }
-}
-
-struct QueryRoot;
-
-#[Object]
-impl QueryRoot {
-    async fn users(&self) -> Result<Vec<User>> {
-        Ok(find_users(&mut POOL.get().unwrap().acquire().await.unwrap()).await)
-    }
-}
-
-struct Mutation;
-
-#[Object]
-impl Mutation {
-    async fn signup(&self, username: String, password: String) -> Result<Uuid> {
-        Ok(create_user(
-            &mut POOL.get().unwrap().acquire().await.unwrap(),
-            &username,
-            &blake3::hash(password.as_bytes()).to_hex(),
-        )
-        .await)
-    }
-
-    async fn login(&self, username: String, password: String) -> Result<bool> {
-        let user =
-            find_user_by_username(&mut POOL.get().unwrap().acquire().await.unwrap(), &username)
-                .await;
-        let password_hash = blake3::hash(password.as_bytes()).to_hex();
-        Ok(user.password_hash == password_hash.to_string())
-    }
-
-    async fn add_person(&self, name: String, user_id: Uuid, password: String) -> Result<Uuid> {
-        Ok(create_person(
-            &mut POOL.get().unwrap().acquire().await.unwrap(),
-            &CRYPTOR.seal_with_passphrase(password.as_bytes(), name.as_bytes())?,
-            &user_id,
-        )
-        .await)
-    }
-}
-
-#[derive(Clone)]
-struct AppState {
-    schema: Schema<QueryRoot, Mutation, EmptySubscription>,
-}
-
-async fn serve_asset(req: tide::Request<()>) -> tide::Result {
-    let file_path = req.param("path").unwrap_or("index.html");
+async fn serve_asset(request: tide::Request<()>) -> tide::Result {
+    let file_path = request.param("path").unwrap_or("index.html");
     match Assets::get(file_path) {
         Some(file) => {
             let mime = Mime::sniff(file.data.as_ref())
@@ -124,26 +61,47 @@ async fn serve_asset(req: tide::Request<()>) -> tide::Result {
 }
 
 pub async fn main(pool: PgPool, matches: &ArgMatches<'_>) -> SimpleResult<()> {
-    POOL.set(pool).expect("Failed to set database pool");
+    let schema = Schema::build(QueryRoot, Mutation, EmptySubscription)
+        .data(pool)
+        .data(RingCryptor::new())
+        .finish();
 
-    let schema = Schema::build(QueryRoot, Mutation, EmptySubscription).finish();
+    let mut app = tide::new();
 
-    let ctrlc = CtrlC::new().expect("Cannot use CTRL-C handler");
-    ctrlc
-        .race(async {
-            let mut app = tide::new();
+    // match option_env!("REDIS_URL") {
+    //     Some(redis_url) => {
+    //         app.with(SessionMiddleware::new(
+    //             RedisSessionStore::new(redis_url).unwrap(),
+    //             env!("TIDE_SECRET").as_bytes(),
+    //         ));
+    //     }
+    //     None => {
+    app.with(SessionMiddleware::new(
+        MemoryStore::new(),
+        env!("TIDE_SECRET").as_bytes(),
+    ));
+    //     }
+    // }
 
-            app.at("/").get(serve_asset);
-            app.at("/*path").get(serve_asset);
+    app.at("/").get(serve_asset);
+    app.at("/*path").get(serve_asset);
 
-            app.at("/graphql").post(async_graphql_tide::graphql(schema));
+    app.at("/graphql")
+        .post(move |mut request: tide::Request<()>| {
+            let schema = schema.clone();
+            let session = Arc::new(Mutex::new(request.session_mut().clone()));
+            async move {
+                let mut graphql_request = async_graphql_tide::receive_request(request).await?;
+                graphql_request = graphql_request.data(session);
+                async_graphql_tide::respond(schema.execute(graphql_request).await)
+            }
+        });
 
-            let address = matches.value_of("ADDRESS").unwrap();
-            let port = matches.value_of("PORT").unwrap();
-            app.listen(format!("{}:{}", address, port))
-                .await
-                .expect("Failed to run server");
-        })
-        .await;
+    let address = matches.value_of("ADDRESS").unwrap();
+    let port = matches.value_of("PORT").unwrap();
+    app.listen(format!("{}:{}", address, port))
+        .await
+        .expect("Failed to run server");
+
     Ok(())
 }

@@ -1,5 +1,65 @@
 {
   "db": "PostgreSQL",
+  "03e80e7a389ef8d64cc018adafe72be67d613de8627daaf1dea037552e08688e": {
+    "query": "\n        INSERT INTO addresses (title, label, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Bytea",
+          "Bytea",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "1274c8e80dda1bb151e109c754bc447a545747e95625d4afe4bcfe19ec50c1e3": {
+    "query": "\n        SELECT *\n        FROM addresses\n        WHERE user_id = $1\n        ORDER BY title\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "label",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "2bd766997ec636920286704862a606b3bbd2d38d4ac809df906b944fda4a217d": {
     "query": "\n        UPDATE people\n        SET name = $2\n        WHERE id = $1\n        ",
     "describe": {
@@ -11,6 +71,44 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "350d2ca9ec42e4e1cbb941dd709c09aa872d4d25341e737e1e5bba466386193f": {
+    "query": "\n        SELECT *\n        FROM cars\n        WHERE user_id = $1\n        ORDER BY model\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "model",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "horsepower",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "3bf08be10ef97b209337773e69d2c8121f0c56e6714297a696e1f2e2f705a109": {
@@ -45,6 +143,65 @@
       ]
     }
   },
+  "3f72e916f034fcf960d3165490a69a03a13dd9a12b2646e60b2f1d4799c03488": {
+    "query": "\n        UPDATE addresses\n        SET title = $2, label = $3\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Bytea"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "433e6ac7c4c9a7059f1e5894b392274f854514923c673d681fadff90db304bfb": {
+    "query": "\n        SELECT *\n        FROM users\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "password_hash",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "4b8702ee52a64eb2dc7086e133d715919865a452b0aa8956b612151696737963": {
+    "query": "\n        UPDATE users\n        SET password_hash = $2\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "4c36bdb0261aeb4da4bffd64b232ac9080fd52c31171750e827ae034ac18aaf3": {
     "query": "\n        DELETE FROM users\n        WHERE username = $1\n        ",
     "describe": {
@@ -52,19 +209,6 @@
       "parameters": {
         "Left": [
           "Text"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "6040b293de37676cdd80179be2c1775a85062176f8ec09209051a75ccc2b52c3": {
-    "query": "\n        UPDATE users\n        SET password_hash = $2\n        WHERE username = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Varchar"
         ]
       },
       "nullable": []
@@ -80,6 +224,28 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "9ccf060aa5a210cd33ee7ad927a16e0e8bfb453edf0e7e13a368469cb38269b7": {
+    "query": "\n        INSERT INTO cars (model, horsepower, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Bytea",
+          "Int2",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
     }
   },
   "9fed28fe53860e7143b7ab837187e17de7a2bd7a9bad4b8734a6eb1ec0308227": {
@@ -133,6 +299,44 @@
       "nullable": [
         false
       ]
+    }
+  },
+  "b830c7c981089f66e920e5b36c288baf618c63e95b584621a895a4a258dc922e": {
+    "query": "\n        DELETE FROM addresses\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "d08d1d74d7bde8ae08ae21610c26a554f7417bc588de177c31d5775817b207a0": {
+    "query": "\n        UPDATE cars\n        SET model = $2, horsepower = $3\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Int2"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "d49e627d5f7a330a50817f3fb7423e80eaff79968d2b152721ef301d19cb583e": {
+    "query": "\n        DELETE FROM cars\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
     }
   },
   "e951e6f127e7bdd649b606d4224d8ceb5a5299d5cd98bf4918cb79df7d59e587": {

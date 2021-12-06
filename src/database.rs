@@ -1,8 +1,6 @@
 use super::model::*;
 use sqlx::migrate::Migrator;
 use sqlx::postgres::{PgConnection, PgPool, PgPoolOptions};
-use sqlx::prelude::*;
-// use sqlx::types::Uuid;
 use sqlx::{Acquire, Postgres, Transaction};
 use uuid::Uuid;
 
@@ -48,6 +46,8 @@ pub async fn create_user(
     username: &str,
     password_hash: &str,
 ) -> Uuid {
+    println!("{}", username);
+    println!("{}", password_hash);
     sqlx::query_as!(
         RowId,
         "
@@ -63,28 +63,20 @@ pub async fn create_user(
     .id
 }
 
-pub async fn update_user_password(
-    connection: &mut PgConnection,
-    username: &str,
-    password_hash: &str,
-) {
+pub async fn update_user(connection: &mut PgConnection, id: &Uuid, password_hash: &str) -> u64 {
     sqlx::query!(
         "
         UPDATE users
         SET password_hash = $2
-        WHERE username = $1
+        WHERE id = $1
         ",
-        username,
+        id,
         password_hash,
     )
     .execute(connection)
     .await
-    .unwrap_or_else(|_| {
-        panic!(
-            "Error while updating user password with username {}",
-            username
-        )
-    });
+    .unwrap_or_else(|_| panic!("Error while updating user with id {}", id))
+    .rows_affected()
 }
 
 pub async fn find_users(connection: &mut PgConnection) -> Vec<User> {
@@ -99,6 +91,21 @@ pub async fn find_users(connection: &mut PgConnection) -> Vec<User> {
     .fetch_all(connection)
     .await
     .expect("Error while finding users")
+}
+
+pub async fn find_user_by_id(connection: &mut PgConnection, id: &Uuid) -> User {
+    sqlx::query_as!(
+        User,
+        "
+        SELECT *
+        FROM users
+        WHERE id = $1
+        ",
+        id,
+    )
+    .fetch_one(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while finding user with id {}", id))
 }
 
 pub async fn find_user_by_username(connection: &mut PgConnection, username: &str) -> User {
@@ -116,7 +123,7 @@ pub async fn find_user_by_username(connection: &mut PgConnection, username: &str
     .unwrap_or_else(|_| panic!("Error while finding user with username {}", username))
 }
 
-pub async fn delete_user_by_username(connection: &mut PgConnection, username: &str) {
+pub async fn delete_user_by_username(connection: &mut PgConnection, username: &str) -> u64 {
     sqlx::query!(
         "
         DELETE FROM users
@@ -126,7 +133,159 @@ pub async fn delete_user_by_username(connection: &mut PgConnection, username: &s
     )
     .execute(connection)
     .await
-    .unwrap_or_else(|_| panic!("Error while deleting user with username {}", username));
+    .unwrap_or_else(|_| panic!("Error while deleting user with username {}", username))
+    .rows_affected()
+}
+
+pub async fn create_address(
+    connection: &mut PgConnection,
+    title: &[u8],
+    label: &[u8],
+    user_id: &Uuid,
+) -> Uuid {
+    sqlx::query_as!(
+        RowId,
+        "
+        INSERT INTO addresses (title, label, user_id)
+        VALUES ($1, $2, $3)
+        RETURNING id",
+        title,
+        label,
+        user_id,
+    )
+    .fetch_one(connection)
+    .await
+    .expect("Error while creating address")
+    .id
+}
+
+pub async fn update_address(
+    connection: &mut PgConnection,
+    id: &Uuid,
+    title: &[u8],
+    label: &[u8],
+) -> u64 {
+    sqlx::query!(
+        "
+        UPDATE addresses
+        SET title = $2, label = $3
+        WHERE id = $1
+        ",
+        id,
+        title,
+        label,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while updating address with id {}", id))
+    .rows_affected()
+}
+
+pub async fn find_addresses_by_user_id(
+    connection: &mut PgConnection,
+    user_id: &Uuid,
+) -> Vec<Address> {
+    sqlx::query_as!(
+        Address,
+        "
+        SELECT *
+        FROM addresses
+        WHERE user_id = $1
+        ORDER BY title
+        ",
+        user_id
+    )
+    .fetch_all(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while finding addresses with user_id {}", user_id))
+}
+
+pub async fn delete_address_by_id(connection: &mut PgConnection, id: &Uuid) -> u64 {
+    sqlx::query!(
+        "
+        DELETE FROM addresses
+        WHERE id = $1
+        ",
+        id,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while deleting address with id {}", id))
+    .rows_affected()
+}
+
+pub async fn create_car(
+    connection: &mut PgConnection,
+    model: &[u8],
+    horsepower: i16,
+    user_id: &Uuid,
+) -> Uuid {
+    sqlx::query_as!(
+        RowId,
+        "
+        INSERT INTO cars (model, horsepower, user_id)
+        VALUES ($1, $2, $3)
+        RETURNING id",
+        model,
+        horsepower,
+        user_id,
+    )
+    .fetch_one(connection)
+    .await
+    .expect("Error while creating car")
+    .id
+}
+
+pub async fn update_car(
+    connection: &mut PgConnection,
+    id: &Uuid,
+    model: &[u8],
+    horsepower: i16,
+) -> u64 {
+    sqlx::query!(
+        "
+        UPDATE cars
+        SET model = $2, horsepower = $3
+        WHERE id = $1
+        ",
+        id,
+        model,
+        horsepower,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while updating car with id {}", id))
+    .rows_affected()
+}
+
+pub async fn find_cars_by_user_id(connection: &mut PgConnection, user_id: &Uuid) -> Vec<Car> {
+    sqlx::query_as!(
+        Car,
+        "
+        SELECT *
+        FROM cars
+        WHERE user_id = $1
+        ORDER BY model
+        ",
+        user_id
+    )
+    .fetch_all(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while finding cars with user_id {}", user_id))
+}
+
+pub async fn delete_car_by_id(connection: &mut PgConnection, id: &Uuid) -> u64 {
+    sqlx::query!(
+        "
+        DELETE FROM cars
+        WHERE id = $1
+        ",
+        id,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while deleting car with id {}", id))
+    .rows_affected()
 }
 
 pub async fn create_person(connection: &mut PgConnection, name: &[u8], user_id: &Uuid) -> Uuid {
@@ -145,7 +304,7 @@ pub async fn create_person(connection: &mut PgConnection, name: &[u8], user_id: 
     .id
 }
 
-pub async fn update_person(connection: &mut PgConnection, id: &Uuid, name: &[u8]) {
+pub async fn update_person(connection: &mut PgConnection, id: &Uuid, name: &[u8]) -> u64 {
     sqlx::query!(
         "
         UPDATE people
@@ -157,7 +316,8 @@ pub async fn update_person(connection: &mut PgConnection, id: &Uuid, name: &[u8]
     )
     .execute(connection)
     .await
-    .unwrap_or_else(|_| panic!("Error while updating person with id {}", id));
+    .unwrap_or_else(|_| panic!("Error while updating person with id {}", id))
+    .rows_affected()
 }
 
 pub async fn find_people_by_user_id(connection: &mut PgConnection, user_id: &Uuid) -> Vec<Person> {
@@ -176,7 +336,7 @@ pub async fn find_people_by_user_id(connection: &mut PgConnection, user_id: &Uui
     .unwrap_or_else(|_| panic!("Error while finding people with user_id {}", user_id))
 }
 
-pub async fn delete_person_by_id(connection: &mut PgConnection, id: &Uuid) {
+pub async fn delete_person_by_id(connection: &mut PgConnection, id: &Uuid) -> u64 {
     sqlx::query!(
         "
         DELETE FROM people
@@ -186,5 +346,6 @@ pub async fn delete_person_by_id(connection: &mut PgConnection, id: &Uuid) {
     )
     .execute(connection)
     .await
-    .unwrap_or_else(|_| panic!("Error while deleting person with id {}", id));
+    .unwrap_or_else(|_| panic!("Error while deleting person with id {}", id))
+    .rows_affected()
 }
