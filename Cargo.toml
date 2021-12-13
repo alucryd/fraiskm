@@ -13,25 +13,28 @@ repository = "https://github.com/alucryd/fraiskm"
 version = "0.1.0-beta"
 
 [dependencies]
-async-graphql = { version = "3.0.12", features = [
-    "dataloader",
+async-graphql = { version = "3.0.15", features = [
+    "chrono",
     "uuid",
 ], default-features = false }
-async-graphql-tide = "3.0.12"
-async-redis-session = "0.2.2"
+async-graphql-tide = "3.0.15"
 async-std = { version = "1.10.0", features = ["attributes"] }
-async-trait = "0.1.51"
+async-trait = "0.1.52"
 base64 = "0.13.0"
+bigdecimal = "0.2.0"
 blake3 = "1.2.0"
+chrono = { version = "0.4.11", default-features = false }
 clap = "2.34.0"
 dotenv = "0.15.0"
 http-types = "2.12.0"
+mailchecker = "4.1.6"
 rayon = "1.5.1"
 ring = "0.16.20"
 rust-embed = { version = "6.3.0", features = ["compression"] }
-serde = { version = "1.0.130", features = ["derive"] }
-simple-error = "0.2.3"
+serde = { version = "1.0.131", features = ["derive"] }
 sqlx = { version = "0.5.9", features = [
+    "bigdecimal",
+    "chrono",
     "migrate",
     "offline",
     "postgres",
@@ -44,8 +47,7 @@ tide = { version = "0.16.0", features = [
     "sessions",
 ], default-features = false }
 tindercrypt = { version = "0.3.2", default-features = false }
-uuid = { version = "0.8.2", features = ["v4"] }
-zip = { version = "0.5.13", features = ["deflate"], default-features = false }
+uuid = { version = "0.8.1", default-features = false }
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 native-tls = { version = "0.2.8", features = ["vendored"] }
@@ -57,3 +59,5 @@ wiremock = "0.5.8"
 [[bin]]
 name = "fraiskm"
 path = "src/main.rs"
+
+[features]

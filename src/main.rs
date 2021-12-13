@@ -3,10 +3,13 @@ extern crate async_graphql_tide;
 extern crate async_std;
 extern crate async_trait;
 extern crate base64;
+extern crate bigdecimal;
 extern crate blake3;
+extern crate chrono;
 extern crate clap;
 extern crate dotenv;
 extern crate http_types;
+extern crate mailchecker;
 extern crate rayon;
 extern crate ring;
 extern crate rust_embed;
@@ -15,6 +18,7 @@ extern crate sqlx;
 extern crate surf;
 extern crate tide;
 extern crate tindercrypt;
+extern crate uuid;
 
 mod database;
 mod model;
@@ -22,16 +26,15 @@ mod mutation;
 mod query;
 mod server;
 mod util;
+mod validator;
 
 use clap::App;
-use database::*;
 use dotenv::dotenv;
-use simple_error::SimpleError;
-
-type SimpleResult<T> = Result<T, SimpleError>;
 
 #[async_std::main]
-async fn main() -> SimpleResult<()> {
+async fn main() {
+    dotenv().ok();
+
     let subcommands = vec![server::subcommand()];
     let matches = App::new(env!("CARGO_BIN_NAME"))
         .version(env!("CARGO_PKG_VERSION"))
@@ -41,17 +44,9 @@ async fn main() -> SimpleResult<()> {
         .get_matches();
 
     if matches.subcommand.is_some() {
-        dotenv().ok();
-
-        let pool = establish_connection(env!("DATABASE_URL")).await;
-
         match matches.subcommand_name() {
-            Some("server") => {
-                server::main(pool, &matches.subcommand_matches("server").unwrap()).await?
-            }
+            Some("server") => server::main(&matches.subcommand_matches("server").unwrap()).await,
             _ => (),
         }
     }
-
-    Ok(())
 }

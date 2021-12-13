@@ -1,5 +1,6 @@
-use super::mutation::Mutation;
-use super::query::QueryRoot;
+use crate::database;
+use crate::mutation::Mutation;
+use crate::query::QueryRoot;
 use async_graphql::{EmptySubscription, Schema};
 use async_std::path::Path;
 use async_std::sync::{Arc, Mutex};
@@ -7,8 +8,6 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use http_types::mime::BYTE_STREAM;
 use http_types::{Mime, StatusCode};
 use rust_embed::RustEmbed;
-use simple_error::SimpleResult;
-use sqlx::postgres::PgPool;
 use tide::sessions::{MemoryStore, SessionMiddleware};
 use tindercrypt::cryptors::RingCryptor;
 
@@ -60,28 +59,19 @@ async fn serve_asset(request: tide::Request<()>) -> tide::Result {
     }
 }
 
-pub async fn main(pool: PgPool, matches: &ArgMatches<'_>) -> SimpleResult<()> {
+pub async fn main(matches: &ArgMatches<'_>) {
     let schema = Schema::build(QueryRoot, Mutation, EmptySubscription)
-        .data(pool)
+        .data(database::establish_connection(env!("DATABASE_URL")).await)
         .data(RingCryptor::new())
+        .data(surf::client())
         .finish();
 
     let mut app = tide::new();
 
-    // match option_env!("REDIS_URL") {
-    //     Some(redis_url) => {
-    //         app.with(SessionMiddleware::new(
-    //             RedisSessionStore::new(redis_url).unwrap(),
-    //             env!("TIDE_SECRET").as_bytes(),
-    //         ));
-    //     }
-    //     None => {
     app.with(SessionMiddleware::new(
         MemoryStore::new(),
         env!("TIDE_SECRET").as_bytes(),
     ));
-    //     }
-    // }
 
     app.at("/").get(serve_asset);
     app.at("/*path").get(serve_asset);
@@ -102,6 +92,4 @@ pub async fn main(pool: PgPool, matches: &ArgMatches<'_>) -> SimpleResult<()> {
     app.listen(format!("{}:{}", address, port))
         .await
         .expect("Failed to run server");
-
-    Ok(())
 }

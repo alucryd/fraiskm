@@ -1,7 +1,7 @@
-use super::model::*;
+use crate::model::*;
+use chrono::NaiveDate;
 use sqlx::migrate::Migrator;
 use sqlx::postgres::{PgConnection, PgPool, PgPoolOptions};
-use sqlx::{Acquire, Postgres, Transaction};
 use uuid::Uuid;
 
 static MIGRATOR: Migrator = sqlx::migrate!();
@@ -21,35 +21,13 @@ pub async fn establish_connection(url: &str) -> PgPool {
     pool
 }
 
-pub async fn begin_transaction(connection: &mut PgConnection) -> Transaction<'_, Postgres> {
-    Acquire::begin(connection)
-        .await
-        .expect("Failed to begin transaction")
-}
-
-pub async fn commit_transaction(transaction: Transaction<'_, Postgres>) {
-    transaction
-        .commit()
-        .await
-        .expect("Failed to commit transaction");
-}
-
-pub async fn rollback_transaction(transaction: Transaction<'_, Postgres>) {
-    transaction
-        .rollback()
-        .await
-        .expect("Failed to rollback transaction");
-}
-
 pub async fn create_user(
     connection: &mut PgConnection,
     username: &str,
     password_hash: &str,
 ) -> Uuid {
-    println!("{}", username);
-    println!("{}", password_hash);
     sqlx::query_as!(
-        RowId,
+        RowUuid,
         "
         INSERT INTO users (username, password_hash)
         VALUES ($1, $2)
@@ -77,20 +55,6 @@ pub async fn update_user(connection: &mut PgConnection, id: &Uuid, password_hash
     .await
     .unwrap_or_else(|_| panic!("Error while updating user with id {}", id))
     .rows_affected()
-}
-
-pub async fn find_users(connection: &mut PgConnection) -> Vec<User> {
-    sqlx::query_as!(
-        User,
-        "
-        SELECT *
-        FROM users
-        ORDER BY username
-        ",
-    )
-    .fetch_all(connection)
-    .await
-    .expect("Error while finding users")
 }
 
 pub async fn find_user_by_id(connection: &mut PgConnection, id: &Uuid) -> User {
@@ -123,17 +87,17 @@ pub async fn find_user_by_username(connection: &mut PgConnection, username: &str
     .unwrap_or_else(|_| panic!("Error while finding user with username {}", username))
 }
 
-pub async fn delete_user_by_username(connection: &mut PgConnection, username: &str) -> u64 {
+pub async fn delete_user_by_id(connection: &mut PgConnection, id: &Uuid) -> u64 {
     sqlx::query!(
         "
         DELETE FROM users
-        WHERE username = $1
+        WHERE id = $1
         ",
-        username,
+        id,
     )
     .execute(connection)
     .await
-    .unwrap_or_else(|_| panic!("Error while deleting user with username {}", username))
+    .unwrap_or_else(|_| panic!("Error while deleting user with id {}", id))
     .rows_affected()
 }
 
@@ -144,7 +108,7 @@ pub async fn create_address(
     user_id: &Uuid,
 ) -> Uuid {
     sqlx::query_as!(
-        RowId,
+        RowUuid,
         "
         INSERT INTO addresses (title, label, user_id)
         VALUES ($1, $2, $3)
@@ -214,88 +178,134 @@ pub async fn delete_address_by_id(connection: &mut PgConnection, id: &Uuid) -> u
     .rows_affected()
 }
 
-pub async fn create_car(
+pub async fn find_vehicle_types(connection: &mut PgConnection) -> Vec<VehicleType> {
+    sqlx::query_as!(
+        VehicleType,
+        "
+        SELECT *
+        FROM vehicle_types
+        ORDER BY id
+        "
+    )
+    .fetch_all(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while finding vehicle types"))
+}
+
+pub async fn create_vehicle(
     connection: &mut PgConnection,
     model: &[u8],
     horsepower: i16,
+    electric: bool,
+    vehicle_type_id: i16,
     user_id: &Uuid,
 ) -> Uuid {
     sqlx::query_as!(
-        RowId,
+        RowUuid,
         "
-        INSERT INTO cars (model, horsepower, user_id)
-        VALUES ($1, $2, $3)
+        INSERT INTO vehicles (model, horsepower, electric, vehicle_type_id, user_id)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING id",
         model,
         horsepower,
+        electric,
+        vehicle_type_id,
         user_id,
     )
     .fetch_one(connection)
     .await
-    .expect("Error while creating car")
+    .expect("Error while creating vehicle")
     .id
 }
 
-pub async fn update_car(
+pub async fn update_vehicle(
     connection: &mut PgConnection,
     id: &Uuid,
     model: &[u8],
     horsepower: i16,
+    electric: bool,
+    vehicle_type_id: i16,
 ) -> u64 {
     sqlx::query!(
         "
-        UPDATE cars
-        SET model = $2, horsepower = $3
+        UPDATE vehicles
+        SET model = $2, horsepower = $3, electric = $4, vehicle_type_id = $5
         WHERE id = $1
         ",
         id,
         model,
         horsepower,
+        electric,
+        vehicle_type_id,
     )
     .execute(connection)
     .await
-    .unwrap_or_else(|_| panic!("Error while updating car with id {}", id))
+    .unwrap_or_else(|_| panic!("Error while updating vehicle with id {}", id))
     .rows_affected()
 }
 
-pub async fn find_cars_by_user_id(connection: &mut PgConnection, user_id: &Uuid) -> Vec<Car> {
+pub async fn find_vehicle_by_id(connection: &mut PgConnection, id: &Uuid) -> Vehicle {
     sqlx::query_as!(
-        Car,
+        Vehicle,
         "
         SELECT *
-        FROM cars
+        FROM vehicles
+        WHERE id = $1
+        ",
+        id
+    )
+    .fetch_one(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while finding vehicle with id {}", id))
+}
+
+pub async fn find_vehicles_by_user_id(
+    connection: &mut PgConnection,
+    user_id: &Uuid,
+) -> Vec<Vehicle> {
+    sqlx::query_as!(
+        Vehicle,
+        "
+        SELECT *
+        FROM vehicles
         WHERE user_id = $1
-        ORDER BY model
+        ORDER BY vehicle_type_id, model
         ",
         user_id
     )
     .fetch_all(connection)
     .await
-    .unwrap_or_else(|_| panic!("Error while finding cars with user_id {}", user_id))
+    .unwrap_or_else(|_| panic!("Error while finding vehicles with user_id {}", user_id))
 }
 
-pub async fn delete_car_by_id(connection: &mut PgConnection, id: &Uuid) -> u64 {
+pub async fn delete_vehicle_by_id(connection: &mut PgConnection, id: &Uuid) -> u64 {
     sqlx::query!(
         "
-        DELETE FROM cars
+        DELETE FROM vehicles
         WHERE id = $1
         ",
         id,
     )
     .execute(connection)
     .await
-    .unwrap_or_else(|_| panic!("Error while deleting car with id {}", id))
+    .unwrap_or_else(|_| panic!("Error while deleting vehicle with id {}", id))
     .rows_affected()
 }
 
-pub async fn create_person(connection: &mut PgConnection, name: &[u8], user_id: &Uuid) -> Uuid {
+pub async fn create_person(
+    connection: &mut PgConnection,
+    name: &[u8],
+    limit_distance: bool,
+    user_id: &Uuid,
+) -> Uuid {
     sqlx::query_as!(
-        RowId,
+        RowUuid,
         "
-        INSERT INTO people (name, user_id)
-        VALUES ($1, $2)
+        INSERT INTO people (name, limit_distance, user_id)
+        VALUES ($1, $2, $3)
         RETURNING id",
         name,
+        limit_distance,
         user_id,
     )
     .fetch_one(connection)
@@ -304,20 +314,41 @@ pub async fn create_person(connection: &mut PgConnection, name: &[u8], user_id: 
     .id
 }
 
-pub async fn update_person(connection: &mut PgConnection, id: &Uuid, name: &[u8]) -> u64 {
+pub async fn update_person(
+    connection: &mut PgConnection,
+    id: &Uuid,
+    name: &[u8],
+    limit_distance: bool,
+) -> u64 {
     sqlx::query!(
         "
         UPDATE people
-        SET name = $2
+        SET name = $2, limit_distance = $3
         WHERE id = $1
         ",
         id,
         name,
+        limit_distance
     )
     .execute(connection)
     .await
     .unwrap_or_else(|_| panic!("Error while updating person with id {}", id))
     .rows_affected()
+}
+
+pub async fn find_person_by_id(connection: &mut PgConnection, id: &Uuid) -> Person {
+    sqlx::query_as!(
+        Person,
+        "
+        SELECT *
+        FROM people
+        WHERE id = $1
+        ",
+        id
+    )
+    .fetch_one(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while finding person with id {}", id))
 }
 
 pub async fn find_people_by_user_id(connection: &mut PgConnection, user_id: &Uuid) -> Vec<Person> {
@@ -447,4 +478,231 @@ pub async fn delete_distance_by_ids(
         )
     })
     .rows_affected()
+}
+
+pub async fn create_journey(
+    connection: &mut PgConnection,
+    from_id: &Uuid,
+    to_id: &Uuid,
+    person_id: &Uuid,
+    vehicle_id: &Uuid,
+    date: &NaiveDate,
+    meters: i32,
+) -> u64 {
+    sqlx::query!(
+        "
+        INSERT INTO journeys (from_id, to_id, person_id, vehicle_id, date, meters)
+        VALUES ($1, $2, $3, $4, $5, $6)",
+        from_id,
+        to_id,
+        person_id,
+        vehicle_id,
+        date,
+        meters,
+    )
+    .execute(connection)
+    .await
+    .expect("Error while creating journey")
+    .rows_affected()
+}
+
+pub async fn update_journey(
+    connection: &mut PgConnection,
+    id: &Uuid,
+    from_id: &Uuid,
+    to_id: &Uuid,
+    person_id: &Uuid,
+    vehicle_id: &Uuid,
+    date: &NaiveDate,
+    meters: i32,
+) -> u64 {
+    sqlx::query!(
+        "
+        UPDATE journeys
+        SET from_id = $2, to_id = $3, person_id = $4, vehicle_id = $5, date = $6, meters = $7
+        WHERE id = $1
+        ",
+        id,
+        from_id,
+        to_id,
+        person_id,
+        vehicle_id,
+        date,
+        meters,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while updating journey with id {}", id))
+    .rows_affected()
+}
+
+pub async fn find_journeys_by_year_and_person_id(
+    connection: &mut PgConnection,
+    year: i16,
+    person_id: &Uuid,
+) -> Vec<Journey> {
+    sqlx::query_as!(
+        Journey,
+        "
+        SELECT *
+        FROM journeys
+        WHERE extract(year FROM date) = $1
+        AND person_id = $2
+        ",
+        f64::from(year),
+        person_id,
+    )
+    .fetch_all(connection)
+    .await
+    .unwrap_or_else(|_| {
+        panic!(
+            "Error while finding journeys with year {} and person_id {}",
+            year, person_id
+        )
+    })
+}
+
+pub async fn delete_journey_by_id(connection: &mut PgConnection, id: &Uuid) -> u64 {
+    sqlx::query!(
+        "
+        DELETE FROM journeys
+        WHERE id = $1
+        ",
+        id,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while deleting journey with id {}", id))
+    .rows_affected()
+}
+
+pub async fn find_scale_by_year_and_horsepower_and_vehicle_type_id(
+    connection: &mut PgConnection,
+    year: i16,
+    horsepower: i16,
+    vehicle_type_id: i16,
+) -> Scale {
+    sqlx::query_as!(
+        Scale,
+        "
+        SELECT *
+        FROM scales
+        WHERE year = $1
+        AND (
+            horsepower_min <= $2 OR horsepower_min IS NULL
+        ) AND (
+            horsepower_max >= $2 OR horsepower_max IS NULL
+        ) AND vehicle_type_id = $3
+        ",
+        year,
+        horsepower,
+        vehicle_type_id,
+    )
+    .fetch_one(connection)
+    .await
+    .unwrap_or_else(|_| {
+        panic!(
+            "Error while finding scale with year {} and horsepower {} and vehicle type id {}",
+            year, horsepower, vehicle_type_id
+        )
+    })
+}
+
+pub async fn compute_total_distance_by_date_and_person_id_and_vehicle_id(
+    connection: &mut PgConnection,
+    date: &NaiveDate,
+    person_id: &Uuid,
+    vehicle_id: &Uuid,
+    journey_id: &Option<Uuid>,
+) -> i64 {
+    match journey_id {
+        Some(journey_id) => sqlx::query_as!(
+            RowInteger,
+            "
+            SELECT COALESCE(SUM(d.meters), 0) AS total
+            FROM journeys j
+            JOIN distances d
+            ON j.from_id = d.from_id
+            AND j.to_id = d.to_id
+            WHERE j.date = $1
+            AND j.person_id = $2
+            AND j.vehicle_id = $3
+            AND j.id != $4
+            ",
+            date,
+            person_id,
+            vehicle_id,
+            journey_id,
+        )
+        .fetch_one(connection)
+        .await
+        .unwrap_or_else(|_| {
+            panic!(
+            "Error while computing total distance with date {} and person_id {} and vehicle_id {}",
+            date, person_id, vehicle_id
+        )
+        })
+        .total
+        .unwrap(),
+        None => sqlx::query_as!(
+            RowInteger,
+            "
+            SELECT COALESCE(SUM(d.meters), 0) AS total
+            FROM journeys j
+            JOIN distances d
+            ON j.from_id = d.from_id
+            AND j.to_id = d.to_id
+            WHERE j.date = $1
+            AND j.person_id = $2
+            AND j.vehicle_id = $3
+            ",
+            date,
+            person_id,
+            vehicle_id,
+        )
+        .fetch_one(connection)
+        .await
+        .unwrap_or_else(|_| {
+            panic!(
+            "Error while computing total distance with date {} and person_id {} and vehicle_id {}",
+            date, person_id, vehicle_id
+        )
+        })
+        .total
+        .unwrap(),
+    }
+}
+
+pub async fn compute_total_distance_by_year_and_person_id_and_vehicle_id(
+    connection: &mut PgConnection,
+    year: i16,
+    person_id: &Uuid,
+    vehicle_id: &Uuid,
+) -> i64 {
+    sqlx::query_as!(
+        RowInteger,
+        "
+        SELECT COALESCE(SUM(d.meters), 0) AS total
+        FROM journeys j
+        JOIN distances d
+        ON j.from_id = d.from_id
+        AND j.to_id = d.to_id
+        WHERE extract(year FROM j.date) = $1
+        AND j.person_id = $2
+        AND j.vehicle_id = $3
+        ",
+        f64::from(year),
+        person_id,
+        vehicle_id,
+    )
+    .fetch_one(connection)
+    .await
+    .unwrap_or_else(|_| {
+        panic!(
+            "Error while computing total distance with year {} and person_id {} and vehicle_id {}",
+            year, person_id, vehicle_id
+        )
+    })
+    .total
+    .unwrap()
 }

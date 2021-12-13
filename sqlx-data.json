@@ -22,6 +22,22 @@
       ]
     }
   },
+  "0b8a0e245fa33d327d7fab2c17ae4b6b9bc2282f2aadf5a02eb49468a79345df": {
+    "query": "\n        UPDATE vehicles\n        SET model = $2, horsepower = $3, electric = $4, vehicle_type_id = $5\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Int2",
+          "Bool",
+          "Int2"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "1274c8e80dda1bb151e109c754bc447a545747e95625d4afe4bcfe19ec50c1e3": {
     "query": "\n        SELECT *\n        FROM addresses\n        WHERE user_id = $1\n        ORDER BY title\n        ",
     "describe": {
@@ -60,6 +76,38 @@
       ]
     }
   },
+  "1c0758fb350d1c3fa00f637b156ecdc5c5b379b4a4fe9342148254dccfc2babd": {
+    "query": "\n        UPDATE people\n        SET name = $2, limit_distance = $3\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Bool"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "1ed2953de513d3a0a55f0b0879996ee494cc0bb29073a61c9c3c1e13b85a6e5d": {
+    "query": "\n        UPDATE journeys\n        SET from_id = $2, to_id = $3, person_id = $4, vehicle_id = $5, date = $6, meters = $7\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Date",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "28936c650a98d91aec100a60cdd35c09c78aabc9cd7b9ada9a433c5314bf9578": {
     "query": "\n        DELETE FROM distances\n        WHERE from_id = $1\n        AND to_id = $2\n        ",
     "describe": {
@@ -71,57 +119,6 @@
         ]
       },
       "nullable": []
-    }
-  },
-  "2bd766997ec636920286704862a606b3bbd2d38d4ac809df906b944fda4a217d": {
-    "query": "\n        UPDATE people\n        SET name = $2\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "350d2ca9ec42e4e1cbb941dd709c09aa872d4d25341e737e1e5bba466386193f": {
-    "query": "\n        SELECT *\n        FROM cars\n        WHERE user_id = $1\n        ORDER BY model\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "model",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 2,
-          "name": "horsepower",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
     }
   },
   "3bf08be10ef97b209337773e69d2c8121f0c56e6714297a696e1f2e2f705a109": {
@@ -141,7 +138,7 @@
         {
           "ordinal": 2,
           "name": "password_hash",
-          "type_info": "Varchar"
+          "type_info": "Bpchar"
         }
       ],
       "parameters": {
@@ -201,7 +198,7 @@
         {
           "ordinal": 2,
           "name": "password_hash",
-          "type_info": "Varchar"
+          "type_info": "Bpchar"
         }
       ],
       "parameters": {
@@ -210,6 +207,56 @@
         ]
       },
       "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "46831ddffcb6a5762157c950790c47494f941a6da2587ddb891ab23df43333d5": {
+    "query": "\n        SELECT *\n        FROM vehicles\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "model",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "horsepower",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 3,
+          "name": "electric",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 4,
+          "name": "vehicle_type_id",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 5,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
         false,
         false,
         false
@@ -249,6 +296,30 @@
       ]
     }
   },
+  "4a114257908933944f25d49443a29e4ca67def48872e1ef5d5c62e9ec41ec4db": {
+    "query": "\n        SELECT *\n        FROM vehicle_types\n        ORDER BY id\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 1,
+          "name": "label",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
   "4b8702ee52a64eb2dc7086e133d715919865a452b0aa8956b612151696737963": {
     "query": "\n        UPDATE users\n        SET password_hash = $2\n        WHERE id = $1\n        ",
     "describe": {
@@ -256,22 +327,229 @@
       "parameters": {
         "Left": [
           "Uuid",
-          "Varchar"
+          "Bpchar"
         ]
       },
       "nullable": []
     }
   },
-  "4c36bdb0261aeb4da4bffd64b232ac9080fd52c31171750e827ae034ac18aaf3": {
-    "query": "\n        DELETE FROM users\n        WHERE username = $1\n        ",
+  "4ee2a47d0f212e554272b193c6636d694baf3d507158867c51599cf22b7e203e": {
+    "query": "\n        SELECT *\n        FROM vehicles\n        WHERE user_id = $1\n        ORDER BY vehicle_type_id, model\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "model",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "horsepower",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 3,
+          "name": "electric",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 4,
+          "name": "vehicle_type_id",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 5,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "57e88d3882b348ef241183e2539cd1b0d66a86b20eec9b89ee4a73e73ea81f29": {
+    "query": "\n            SELECT COALESCE(SUM(d.meters), 0) AS total\n            FROM journeys j\n            JOIN distances d\n            ON j.from_id = d.from_id\n            AND j.to_id = d.to_id\n            WHERE j.date = $1\n            AND j.person_id = $2\n            AND j.vehicle_id = $3\n            AND j.id != $4\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "total",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Date",
+          "Uuid",
+          "Uuid",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
+  "5fa219cfc29aba262ff88dec55d1052fb116ef9d77d4a138fe21a463d1652147": {
+    "query": "\n        SELECT *\n        FROM journeys\n        WHERE extract(year FROM date) = $1\n        AND person_id = $2\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "from_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "to_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 3,
+          "name": "person_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "vehicle_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 5,
+          "name": "date",
+          "type_info": "Date"
+        },
+        {
+          "ordinal": 6,
+          "name": "meters",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Float8",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "675968152ff4b3a343f1ffd50350779a4dfd2e4dc0bfbab71e7becb2a91a5712": {
+    "query": "\n        INSERT INTO journeys (from_id, to_id, person_id, vehicle_id, date, meters)\n        VALUES ($1, $2, $3, $4, $5, $6)",
     "describe": {
       "columns": [],
       "parameters": {
         "Left": [
-          "Text"
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Date",
+          "Int4"
         ]
       },
       "nullable": []
+    }
+  },
+  "72f0a036585cd2ecdf83b9062bc82ce7f6bf0aeb453a85c9d7fc6f2029c0388a": {
+    "query": "\n            SELECT COALESCE(SUM(d.meters), 0) AS total\n            FROM journeys j\n            JOIN distances d\n            ON j.from_id = d.from_id\n            AND j.to_id = d.to_id\n            WHERE j.date = $1\n            AND j.person_id = $2\n            AND j.vehicle_id = $3\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "total",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Date",
+          "Uuid",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
+  "7511687b792d3c4fe6e9b6604c40df50864cc3b7c63b7154cc2e77da142217b5": {
+    "query": "\n        DELETE FROM journeys\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "88ca3840c369455c0ba1fb199fb36ff016fb5de8c73bc67990d6ba460d0a44d6": {
+    "query": "\n        SELECT *\n        FROM people\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "limit_distance",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "969681d85372ace3a26955273b3c4b5a10a1040fa3e0a22e4ea5820006d9db4a": {
@@ -286,26 +564,16 @@
       "nullable": []
     }
   },
-  "9ccf060aa5a210cd33ee7ad927a16e0e8bfb453edf0e7e13a368469cb38269b7": {
-    "query": "\n        INSERT INTO cars (model, horsepower, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
+  "9ec7dc47e7ea2d9eaf1d569bea171aa76cea7e035cf16137a966060b3e9e7b76": {
+    "query": "\n        DELETE FROM vehicles\n        WHERE id = $1\n        ",
     "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        }
-      ],
+      "columns": [],
       "parameters": {
         "Left": [
-          "Bytea",
-          "Int2",
           "Uuid"
         ]
       },
-      "nullable": [
-        false
-      ]
+      "nullable": []
     }
   },
   "9fed28fe53860e7143b7ab837187e17de7a2bd7a9bad4b8734a6eb1ec0308227": {
@@ -324,6 +592,11 @@
         },
         {
           "ordinal": 2,
+          "name": "limit_distance",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 3,
           "name": "user_id",
           "type_info": "Uuid"
         }
@@ -336,12 +609,13 @@
       "nullable": [
         false,
         false,
+        false,
         false
       ]
     }
   },
-  "b6f2e3a7ce6fed49f2de7ac41c2b9a8b0e2b243efb6f982f9549b94a83cc441f": {
-    "query": "\n        INSERT INTO people (name, user_id)\n        VALUES ($1, $2)\n        RETURNING id",
+  "ad1c366c2b9f8caba09918c0b647e868f501728f3ac2422b450c13027ada6b90": {
+    "query": "\n        INSERT INTO people (name, limit_distance, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
     "describe": {
       "columns": [
         {
@@ -353,11 +627,34 @@
       "parameters": {
         "Left": [
           "Bytea",
+          "Bool",
           "Uuid"
         ]
       },
       "nullable": [
         false
+      ]
+    }
+  },
+  "af33f2794f26b17c8f12c5210fdbdf1894b7963b50d6c52fc6f2ca4fd6151412": {
+    "query": "\n        SELECT COALESCE(SUM(d.meters), 0) AS total\n        FROM journeys j\n        JOIN distances d\n        ON j.from_id = d.from_id\n        AND j.to_id = d.to_id\n        WHERE extract(year FROM j.date) = $1\n        AND j.person_id = $2\n        AND j.vehicle_id = $3\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "total",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Float8",
+          "Uuid",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        null
       ]
     }
   },
@@ -387,22 +684,8 @@
       "nullable": []
     }
   },
-  "d08d1d74d7bde8ae08ae21610c26a554f7417bc588de177c31d5775817b207a0": {
-    "query": "\n        UPDATE cars\n        SET model = $2, horsepower = $3\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea",
-          "Int2"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "d49e627d5f7a330a50817f3fb7423e80eaff79968d2b152721ef301d19cb583e": {
-    "query": "\n        DELETE FROM cars\n        WHERE id = $1\n        ",
+  "e977935abd39104af6e8c08260ed279ea56c634be130661af0aa090117736549": {
+    "query": "\n        DELETE FROM users\n        WHERE id = $1\n        ",
     "describe": {
       "columns": [],
       "parameters": {
@@ -413,8 +696,32 @@
       "nullable": []
     }
   },
-  "e951e6f127e7bdd649b606d4224d8ceb5a5299d5cd98bf4918cb79df7d59e587": {
-    "query": "\n        SELECT *\n        FROM users\n        ORDER BY username\n        ",
+  "f21e1f666ef2ffed464b899d332f1ef44a6ebe74fb18ca4e8fb63a77d8585db1": {
+    "query": "\n        INSERT INTO vehicles (model, horsepower, electric, vehicle_type_id, user_id)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Bytea",
+          "Int2",
+          "Bool",
+          "Int2",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "f7621d30a49ae5e6b5be8110b2beb45a653267e0ed4e0d6bc5d7e54cfd5a89f5": {
+    "query": "\n        SELECT *\n        FROM scales\n        WHERE year = $1\n        AND (\n            horsepower_min <= $2 OR horsepower_min IS NULL\n        ) AND (\n            horsepower_max >= $2 OR horsepower_max IS NULL\n        ) AND vehicle_type_id = $3\n        ",
     "describe": {
       "columns": [
         {
@@ -424,19 +731,71 @@
         },
         {
           "ordinal": 1,
-          "name": "username",
-          "type_info": "Varchar"
+          "name": "year",
+          "type_info": "Int2"
         },
         {
           "ordinal": 2,
-          "name": "password_hash",
-          "type_info": "Varchar"
+          "name": "horsepower_min",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 3,
+          "name": "horsepower_max",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 4,
+          "name": "first_threshold",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 5,
+          "name": "second_threshold",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 6,
+          "name": "first_slice_multiplier",
+          "type_info": "Numeric"
+        },
+        {
+          "ordinal": 7,
+          "name": "second_slice_multiplier",
+          "type_info": "Numeric"
+        },
+        {
+          "ordinal": 8,
+          "name": "third_slice_multiplier",
+          "type_info": "Numeric"
+        },
+        {
+          "ordinal": 9,
+          "name": "second_slice_fixed_amount",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 10,
+          "name": "vehicle_type_id",
+          "type_info": "Int2"
         }
       ],
       "parameters": {
-        "Left": []
+        "Left": [
+          "Int2",
+          "Int2",
+          "Int2"
+        ]
       },
       "nullable": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false
@@ -456,7 +815,7 @@
       "parameters": {
         "Left": [
           "Varchar",
-          "Varchar"
+          "Bpchar"
         ]
       },
       "nullable": [
