@@ -31,7 +31,7 @@
     event.preventDefault();
     try {
       await login(username, password);
-      goto("/login", { replaceState: false });
+      goto("/", { replaceState: false });
     } catch (error) {
       errorMessage = error.response.errors[0].message;
     }
