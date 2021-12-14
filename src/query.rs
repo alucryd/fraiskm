@@ -1,7 +1,7 @@
 use crate::database::*;
 use crate::model::*;
 use crate::util::*;
-use async_graphql::{ComplexObject, Context, Object, Result};
+use async_graphql::{ComplexObject, Context, Error, Object, Result};
 use async_std::sync::{Arc, Mutex};
 use bigdecimal::{BigDecimal, ToPrimitive, Zero};
 use sqlx::postgres::PgPool;
@@ -14,9 +14,9 @@ use uuid::Uuid;
 impl UserObject {}
 
 #[ComplexObject]
-impl PersonObject {
+impl DriverObject {
     async fn journeys(&self, ctx: &Context<'_>, year: i16) -> Result<Vec<JourneyObject>> {
-        Ok(find_journeys_by_year_and_person_id(
+        Ok(find_journeys_by_year_and_driver_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             year,
             &self.id,
@@ -32,7 +32,69 @@ pub struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
+    async fn me(&self, ctx: &Context<'_>) -> Result<UserObject> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if let Some(id) = session.get::<Uuid>("id") {
+            let user = find_user_by_id(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &id,
+            )
+            .await;
+            Ok(UserObject::from_db(user))
+        } else {
+            Err(Error::new("not logged in"))
+        }
+    }
+
+    async fn addresses(&self, ctx: &Context<'_>) -> Result<Vec<AddressObject>> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if let Some(id) = session.get::<Uuid>("id") {
+            Ok(find_addresses_by_user_id(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &id,
+            )
+            .await
+            .into_iter()
+            .map(|address| {
+                AddressObject::from_db(
+                    address,
+                    ctx.data_unchecked::<RingCryptor>(),
+                    &decode_key(&session.get::<String>("key").unwrap()),
+                )
+            })
+            .collect())
+        } else {
+            Err(Error::new("not logged in"))
+        }
+    }
+
+    async fn drivers(&self, ctx: &Context<'_>) -> Result<Vec<DriverObject>> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if let Some(id) = session.get::<Uuid>("id") {
+            Ok(find_drivers_by_user_id(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &id,
+            )
+            .await
+            .into_iter()
+            .map(|driver| {
+                DriverObject::from_db(
+                    driver,
+                    ctx.data_unchecked::<RingCryptor>(),
+                    &decode_key(&session.get::<String>("key").unwrap()),
+                )
+            })
+            .collect())
+        } else {
+            Err(Error::new("not logged in"))
+        }
+    }
+
     async fn vehicle_types(&self, ctx: &Context<'_>) -> Result<Vec<VehicleTypeObject>> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(
             find_vehicle_types(&mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap())
                 .await
@@ -42,58 +104,26 @@ impl QueryRoot {
         )
     }
 
-    async fn addresses(&self, ctx: &Context<'_>) -> Result<Vec<AddressObject>> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        Ok(find_addresses_by_user_id(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &session.get::<Uuid>("id").unwrap(),
-        )
-        .await
-        .into_iter()
-        .map(|address| {
-            AddressObject::from_db(
-                address,
-                ctx.data_unchecked::<RingCryptor>(),
-                &decode_key(&session.get::<String>("key").unwrap()),
-            )
-        })
-        .collect())
-    }
-
-    async fn people(&self, ctx: &Context<'_>) -> Result<Vec<PersonObject>> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        Ok(find_people_by_user_id(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &session.get::<Uuid>("id").unwrap(),
-        )
-        .await
-        .into_iter()
-        .map(|person| {
-            PersonObject::from_db(
-                person,
-                ctx.data_unchecked::<RingCryptor>(),
-                &decode_key(&session.get::<String>("key").unwrap()),
-            )
-        })
-        .collect())
-    }
-
     async fn vehicles(&self, ctx: &Context<'_>) -> Result<Vec<VehicleObject>> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        Ok(find_vehicles_by_user_id(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &session.get::<Uuid>("id").unwrap(),
-        )
-        .await
-        .into_iter()
-        .map(|vehicle| {
-            VehicleObject::from_db(
-                vehicle,
-                ctx.data_unchecked::<RingCryptor>(),
-                &decode_key(&session.get::<String>("key").unwrap()),
+        if let Some(id) = session.get::<Uuid>("id") {
+            Ok(find_vehicles_by_user_id(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &id,
             )
-        })
-        .collect())
+            .await
+            .into_iter()
+            .map(|vehicle| {
+                VehicleObject::from_db(
+                    vehicle,
+                    ctx.data_unchecked::<RingCryptor>(),
+                    &decode_key(&session.get::<String>("key").unwrap()),
+                )
+            })
+            .collect())
+        } else {
+            Err(Error::new("not logged in"))
+        }
     }
 
     async fn distance(
@@ -102,6 +132,10 @@ impl QueryRoot {
         from_id: Uuid,
         to_id: Uuid,
     ) -> Result<Option<DistanceObject>> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(find_distance_by_ids(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &from_id,
@@ -115,9 +149,13 @@ impl QueryRoot {
         &self,
         ctx: &Context<'_>,
         year: i16,
-        person_id: Uuid,
+        driver_id: Uuid,
         vehicle_id: Uuid,
     ) -> Result<TotalObject> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
         let vehicle = find_vehicle_by_id(&mut connection, &vehicle_id).await;
         let scale = find_scale_by_year_and_horsepower_and_vehicle_type_id(
@@ -127,10 +165,10 @@ impl QueryRoot {
             vehicle.vehicle_type_id,
         )
         .await;
-        let distance = compute_total_distance_by_year_and_person_id_and_vehicle_id(
+        let distance = compute_total_distance_by_year_and_driver_id_and_vehicle_id(
             &mut connection,
             year,
-            &person_id,
+            &driver_id,
             &vehicle_id,
         )
         .await;
@@ -148,14 +186,20 @@ impl QueryRoot {
             );
             formula += &format!(
                 " + {} x {} + {}",
-                second_slice / 1000, scale.second_slice_multiplier, scale.second_slice_fixed_amount
+                second_slice / 1000,
+                scale.second_slice_multiplier,
+                scale.second_slice_fixed_amount
             );
             total += scale.second_slice_multiplier * BigDecimal::from(second_slice)
                 + BigDecimal::from(scale.second_slice_fixed_amount)
         }
         if distance > second_threshold {
             let third_slice = distance - second_threshold;
-            formula += &format!(" + {} x {}", third_slice / 1000, scale.third_slice_multiplier);
+            formula += &format!(
+                " + {} x {}",
+                third_slice / 1000,
+                scale.third_slice_multiplier
+            );
             total += scale.third_slice_multiplier * BigDecimal::from(third_slice)
         }
         if vehicle.electric {

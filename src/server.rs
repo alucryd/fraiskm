@@ -12,7 +12,7 @@ use tide::sessions::{MemoryStore, SessionMiddleware};
 use tindercrypt::cryptors::RingCryptor;
 
 #[derive(RustEmbed)]
-#[folder = "public/"]
+#[folder = "build/"]
 struct Assets;
 
 pub fn subcommand<'a, 'b>() -> App<'a, 'b> {
@@ -39,7 +39,13 @@ pub fn subcommand<'a, 'b>() -> App<'a, 'b> {
 }
 
 async fn serve_asset(request: tide::Request<()>) -> tide::Result {
-    let file_path = request.param("path").unwrap_or("index.html");
+    let file_path = request.param("path").map_or("index.html", |path| {
+        if path.split("/").last().unwrap().contains(".") {
+            path
+        } else {
+            "index.html"
+        }
+    });
     match Assets::get(file_path) {
         Some(file) => {
             let mime = Mime::sniff(file.data.as_ref())

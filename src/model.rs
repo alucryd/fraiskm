@@ -115,26 +115,35 @@ impl VehicleObject {
 }
 
 #[derive(FromRow)]
-pub struct Person {
+pub struct Driver {
     pub id: Uuid,
     pub name: Vec<u8>,
     pub limit_distance: bool,
     pub user_id: Uuid,
+    pub default_vehicle_id: Option<Uuid>,
+    pub default_from_id: Option<Uuid>,
+    pub default_to_id: Option<Uuid>,
 }
 
 #[derive(SimpleObject)]
-pub struct PersonObject {
+pub struct DriverObject {
     pub id: Uuid,
     pub name: String,
     pub limit_distance: bool,
+    pub default_vehicle_id: Option<Uuid>,
+    pub default_from_id: Option<Uuid>,
+    pub default_to_id: Option<Uuid>,
 }
 
-impl PersonObject {
-    pub fn from_db(person: Person, cryptor: &RingCryptor, key: &[u8]) -> PersonObject {
-        PersonObject {
-            id: person.id,
-            name: String::from_utf8_lossy(&cryptor.open(key, &person.name).unwrap()).to_string(),
-            limit_distance: person.limit_distance,
+impl DriverObject {
+    pub fn from_db(driver: Driver, cryptor: &RingCryptor, key: &[u8]) -> DriverObject {
+        DriverObject {
+            id: driver.id,
+            name: String::from_utf8_lossy(&cryptor.open(key, &driver.name).unwrap()).to_string(),
+            limit_distance: driver.limit_distance,
+            default_vehicle_id: driver.default_vehicle_id,
+            default_from_id: driver.default_from_id,
+            default_to_id: driver.default_to_id,
         }
     }
 }
@@ -164,7 +173,7 @@ pub struct Journey {
     pub id: Uuid,
     pub from_id: Uuid,
     pub to_id: Uuid,
-    pub person_id: Uuid,
+    pub driver_id: Uuid,
     pub vehicle_id: Uuid,
     pub date: NaiveDate,
     pub meters: i32,
@@ -174,7 +183,7 @@ pub struct Journey {
 pub struct JourneyObject {
     pub from_id: Uuid,
     pub to_id: Uuid,
-    pub person_id: Uuid,
+    pub driver_id: Uuid,
     pub vehicle_id: Uuid,
     pub date: NaiveDate,
     pub meters: i32,
@@ -185,7 +194,7 @@ impl JourneyObject {
         JourneyObject {
             from_id: journey.from_id,
             to_id: journey.to_id,
-            person_id: journey.person_id,
+            driver_id: journey.driver_id,
             vehicle_id: journey.vehicle_id,
             date: journey.date,
             meters: journey.meters,

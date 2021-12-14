@@ -20,20 +20,24 @@ impl Mutation {
         #[graphql(validator(email))] username: String,
         password: String,
     ) -> Result<UserObject> {
-        let user = find_user_by_username(
+        if let Some(user) = find_user_by_username(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &username,
         )
-        .await;
-        if hash_password(&password) != user.password_hash {
-            return Err(Error::new("invalid password"));
+        .await
+        {
+            if hash_password(&password) != user.password_hash {
+                return Err(Error::new("invalid password"));
+            }
+            let mut session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+            session
+                .insert("key", derive_pbkdf2_key(&username, &password))
+                .unwrap();
+            session.insert("id", user.id).unwrap();
+            Ok(UserObject::from_db(user))
+        } else {
+            Err(Error::new("unknown username"))
         }
-        let mut session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        session
-            .insert("key", derive_pbkdf2_key(&username, &password))
-            .unwrap();
-        session.insert("id", user.id).unwrap();
-        Ok(UserObject::from_db(user))
     }
 
     async fn logout(&self, ctx: &Context<'_>) -> Result<bool> {
@@ -61,12 +65,16 @@ impl Mutation {
 
     async fn delete_user(&self, ctx: &Context<'_>) -> Result<bool> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        delete_user_by_id(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &session.get::<Uuid>("id").unwrap(),
-        )
-        .await;
-        self.logout(ctx).await
+        if let Some(id) = session.get::<Uuid>("id") {
+            delete_user_by_id(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &id,
+            )
+            .await;
+            self.logout(ctx).await
+        } else {
+            Err(Error::new("not logged in"))
+        }
     }
 
     async fn update_password(
@@ -77,16 +85,23 @@ impl Mutation {
     ) -> Result<bool> {
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        let id = &session.get::<Uuid>("id").unwrap();
-        let user = find_user_by_id(&mut connection, &id).await;
-        if hash_password(&old_password) != user.password_hash {
-            return Err(Error::new("invalid password"));
+        if let Some(id) = session.get::<Uuid>("id") {
+            let user = find_user_by_id(&mut connection, &id).await;
+            if hash_password(&old_password) != user.password_hash {
+                return Err(Error::new("invalid password"));
+            }
+            update_user(&mut connection, &id, &hash_password(&new_password)).await;
+            Ok(true)
+        } else {
+            Err(Error::new("not logged in"))
         }
-        update_user(&mut connection, &id, &hash_password(&new_password)).await;
-        Ok(true)
     }
 
     async fn normalize_address(&self, ctx: &Context<'_>, label: String) -> Result<Vec<String>> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         let client = ctx.data_unchecked::<surf::Client>();
         let request = surf::get("https://api-adresse.data.gouv.fr/search/")
             .query(&AddressRequest { q: label })
@@ -99,19 +114,23 @@ impl Mutation {
 
     async fn add_address(&self, ctx: &Context<'_>, title: String, label: String) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        Ok(create_address(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                title.as_bytes(),
-            )?,
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                label.as_bytes(),
-            )?,
-            &session.get::<Uuid>("id").unwrap(),
-        )
-        .await)
+        if let Some(id) = session.get::<Uuid>("id") {
+            Ok(create_address(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
+                    &decode_key(&session.get::<String>("key").unwrap()),
+                    title.as_bytes(),
+                )?,
+                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
+                    &decode_key(&session.get::<String>("key").unwrap()),
+                    label.as_bytes(),
+                )?,
+                &id,
+            )
+            .await)
+        } else {
+            Err(Error::new("not logged in"))
+        }
     }
 
     async fn update_address(
@@ -122,6 +141,9 @@ impl Mutation {
         label: String,
     ) -> Result<u64> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(update_address(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
@@ -138,6 +160,10 @@ impl Mutation {
     }
 
     async fn delete_address(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(delete_address_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
@@ -145,26 +171,30 @@ impl Mutation {
         .await)
     }
 
-    async fn add_person(
+    async fn add_driver(
         &self,
         ctx: &Context<'_>,
         name: String,
         limit_distance: bool,
     ) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        Ok(create_person(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                name.as_bytes(),
-            )?,
-            limit_distance,
-            &session.get::<Uuid>("id").unwrap(),
-        )
-        .await)
+        if let Some(id) = session.get::<Uuid>("id") {
+            Ok(create_driver(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
+                    &decode_key(&session.get::<String>("key").unwrap()),
+                    name.as_bytes(),
+                )?,
+                limit_distance,
+                &id,
+            )
+            .await)
+        } else {
+            Err(Error::new("not logged in"))
+        }
     }
 
-    async fn update_person(
+    async fn update_driver(
         &self,
         ctx: &Context<'_>,
         id: Uuid,
@@ -172,7 +202,10 @@ impl Mutation {
         limit_distance: bool,
     ) -> Result<u64> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        Ok(update_person(
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
+        Ok(update_driver(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
             &ctx.data_unchecked::<RingCryptor>().seal_with_key(
@@ -184,8 +217,12 @@ impl Mutation {
         .await)
     }
 
-    async fn delete_person(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
-        Ok(delete_person_by_id(
+    async fn delete_driver(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
+        Ok(delete_driver_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
         )
@@ -201,18 +238,22 @@ impl Mutation {
         vehicle_type_id: i16,
     ) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        Ok(create_vehicle(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                model.as_bytes(),
-            )?,
-            horsepower,
-            electric,
-            vehicle_type_id,
-            &session.get::<Uuid>("id").unwrap(),
-        )
-        .await)
+        if let Some(id) = session.get::<Uuid>("id") {
+            Ok(create_vehicle(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
+                    &decode_key(&session.get::<String>("key").unwrap()),
+                    model.as_bytes(),
+                )?,
+                horsepower,
+                electric,
+                vehicle_type_id,
+                &id,
+            )
+            .await)
+        } else {
+            Err(Error::new("not logged in"))
+        }
     }
 
     async fn update_vehicle(
@@ -225,6 +266,9 @@ impl Mutation {
         vehicle_type_id: i16,
     ) -> Result<u64> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(update_vehicle(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
@@ -240,6 +284,10 @@ impl Mutation {
     }
 
     async fn delete_vehicle(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(delete_vehicle_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
@@ -254,6 +302,10 @@ impl Mutation {
         to_id: Uuid,
         meters: i32,
     ) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(create_distance(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &from_id,
@@ -270,6 +322,10 @@ impl Mutation {
         to_id: Uuid,
         meters: i32,
     ) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(update_distance(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &from_id,
@@ -280,6 +336,10 @@ impl Mutation {
     }
 
     async fn delete_distance(&self, ctx: &Context<'_>, from_id: Uuid, to_id: Uuid) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(delete_distance_by_ids(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &from_id,
@@ -293,18 +353,22 @@ impl Mutation {
         ctx: &Context<'_>,
         from_id: Uuid,
         to_id: Uuid,
-        person_id: Uuid,
+        driver_id: Uuid,
         vehicle_id: Uuid,
         date: NaiveDate,
         meters: i32,
     ) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
-        let person = find_person_by_id(&mut connection, &person_id).await;
-        if person.limit_distance {
-            let distance = compute_total_distance_by_date_and_person_id_and_vehicle_id(
+        let driver = find_driver_by_id(&mut connection, &driver_id).await;
+        if driver.limit_distance {
+            let distance = compute_total_distance_by_date_and_driver_id_and_vehicle_id(
                 &mut connection,
                 &date,
-                &person_id,
+                &driver_id,
                 &vehicle_id,
                 &None,
             )
@@ -317,7 +381,7 @@ impl Mutation {
             &mut connection,
             &from_id,
             &to_id,
-            &person_id,
+            &driver_id,
             &vehicle_id,
             &date,
             meters,
@@ -331,18 +395,22 @@ impl Mutation {
         id: Uuid,
         from_id: Uuid,
         to_id: Uuid,
-        person_id: Uuid,
+        driver_id: Uuid,
         vehicle_id: Uuid,
         date: NaiveDate,
         meters: i32,
     ) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
-        let person = find_person_by_id(&mut connection, &person_id).await;
-        if person.limit_distance {
-            let distance = compute_total_distance_by_date_and_person_id_and_vehicle_id(
+        let driver = find_driver_by_id(&mut connection, &driver_id).await;
+        if driver.limit_distance {
+            let distance = compute_total_distance_by_date_and_driver_id_and_vehicle_id(
                 &mut connection,
                 &date,
-                &person_id,
+                &driver_id,
                 &vehicle_id,
                 &Some(id),
             )
@@ -356,7 +424,7 @@ impl Mutation {
             &id,
             &from_id,
             &to_id,
-            &person_id,
+            &driver_id,
             &vehicle_id,
             &date,
             meters,
@@ -365,6 +433,10 @@ impl Mutation {
     }
 
     async fn delete_journey(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
         Ok(delete_journey_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,

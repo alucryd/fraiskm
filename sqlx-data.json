@@ -11,15 +11,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Bytea",
-          "Bytea",
-          "Uuid"
-        ]
+        "Left": ["Bytea", "Bytea", "Uuid"]
       },
-      "nullable": [
-        false
-      ]
+      "nullable": [false]
     }
   },
   "0b8a0e245fa33d327d7fab2c17ae4b6b9bc2282f2aadf5a02eb49468a79345df": {
@@ -27,13 +21,7 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea",
-          "Int2",
-          "Bool",
-          "Int2"
-        ]
+        "Left": ["Uuid", "Bytea", "Int2", "Bool", "Int2"]
       },
       "nullable": []
     }
@@ -64,48 +52,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "1c0758fb350d1c3fa00f637b156ecdc5c5b379b4a4fe9342148254dccfc2babd": {
-    "query": "\n        UPDATE people\n        SET name = $2, limit_distance = $3\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea",
-          "Bool"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "1ed2953de513d3a0a55f0b0879996ee494cc0bb29073a61c9c3c1e13b85a6e5d": {
-    "query": "\n        UPDATE journeys\n        SET from_id = $2, to_id = $3, person_id = $4, vehicle_id = $5, date = $6, meters = $7\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Uuid",
-          "Uuid",
-          "Uuid",
-          "Uuid",
-          "Date",
-          "Int4"
-        ]
-      },
-      "nullable": []
+      "nullable": [false, false, false, false]
     }
   },
   "28936c650a98d91aec100a60cdd35c09c78aabc9cd7b9ada9a433c5314bf9578": {
@@ -113,10 +62,17 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid",
-          "Uuid"
-        ]
+        "Left": ["Uuid", "Uuid"]
+      },
+      "nullable": []
+    }
+  },
+  "353063db7d12fdd8791072d39dd90c0b69d243d26dd64e501e006935109d31d5": {
+    "query": "\n        UPDATE drivers\n        SET name = $2, limit_distance = $3\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": ["Uuid", "Bytea", "Bool"]
       },
       "nullable": []
     }
@@ -142,15 +98,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Text"
-        ]
+        "Left": ["Text"]
       },
-      "nullable": [
-        false,
-        false,
-        false
-      ]
+      "nullable": [false, false, false]
     }
   },
   "3f72e916f034fcf960d3165490a69a03a13dd9a12b2646e60b2f1d4799c03488": {
@@ -158,11 +108,7 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea",
-          "Bytea"
-        ]
+        "Left": ["Uuid", "Bytea", "Bytea"]
       },
       "nullable": []
     }
@@ -172,11 +118,7 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid",
-          "Uuid",
-          "Int4"
-        ]
+        "Left": ["Uuid", "Uuid", "Int4"]
       },
       "nullable": []
     }
@@ -202,15 +144,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
-      "nullable": [
-        false,
-        false,
-        false
-      ]
+      "nullable": [false, false, false]
     }
   },
   "46831ddffcb6a5762157c950790c47494f941a6da2587ddb891ab23df43333d5": {
@@ -249,18 +185,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
+      "nullable": [false, false, false, false, false, false]
     }
   },
   "4899aa13d3dd8420eab00249baf00f7ef85041bd85afb0584574fb538cebcfa5": {
@@ -284,16 +211,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Uuid",
-          "Uuid"
-        ]
+        "Left": ["Uuid", "Uuid"]
       },
-      "nullable": [
-        false,
-        false,
-        false
-      ]
+      "nullable": [false, false, false]
     }
   },
   "4a114257908933944f25d49443a29e4ca67def48872e1ef5d5c62e9ec41ec4db": {
@@ -314,10 +234,7 @@
       "parameters": {
         "Left": []
       },
-      "nullable": [
-        false,
-        false
-      ]
+      "nullable": [false, false]
     }
   },
   "4b8702ee52a64eb2dc7086e133d715919865a452b0aa8956b612151696737963": {
@@ -325,10 +242,7 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid",
-          "Bpchar"
-        ]
+        "Left": ["Uuid", "Bpchar"]
       },
       "nullable": []
     }
@@ -369,45 +283,13 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
+      "nullable": [false, false, false, false, false, false]
     }
   },
-  "57e88d3882b348ef241183e2539cd1b0d66a86b20eec9b89ee4a73e73ea81f29": {
-    "query": "\n            SELECT COALESCE(SUM(d.meters), 0) AS total\n            FROM journeys j\n            JOIN distances d\n            ON j.from_id = d.from_id\n            AND j.to_id = d.to_id\n            WHERE j.date = $1\n            AND j.person_id = $2\n            AND j.vehicle_id = $3\n            AND j.id != $4\n            ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "total",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Date",
-          "Uuid",
-          "Uuid",
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        null
-      ]
-    }
-  },
-  "5fa219cfc29aba262ff88dec55d1052fb116ef9d77d4a138fe21a463d1652147": {
-    "query": "\n        SELECT *\n        FROM journeys\n        WHERE extract(year FROM date) = $1\n        AND person_id = $2\n        ",
+  "5178b105dce463524e022e7bbb9c90f7a8226dc4cf335e21946cedd7a49a6255": {
+    "query": "\n        SELECT *\n        FROM drivers\n        WHERE id = $1\n        ",
     "describe": {
       "columns": [
         {
@@ -417,71 +299,43 @@
         },
         {
           "ordinal": 1,
-          "name": "from_id",
-          "type_info": "Uuid"
+          "name": "name",
+          "type_info": "Bytea"
         },
         {
           "ordinal": 2,
-          "name": "to_id",
-          "type_info": "Uuid"
+          "name": "limit_distance",
+          "type_info": "Bool"
         },
         {
           "ordinal": 3,
-          "name": "person_id",
+          "name": "user_id",
           "type_info": "Uuid"
         },
         {
           "ordinal": 4,
-          "name": "vehicle_id",
+          "name": "default_vehicle_id",
           "type_info": "Uuid"
         },
         {
           "ordinal": 5,
-          "name": "date",
-          "type_info": "Date"
+          "name": "default_from_id",
+          "type_info": "Uuid"
         },
         {
           "ordinal": 6,
-          "name": "meters",
-          "type_info": "Int4"
+          "name": "default_to_id",
+          "type_info": "Uuid"
         }
       ],
       "parameters": {
-        "Left": [
-          "Float8",
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
+      "nullable": [false, false, false, false, true, true, true]
     }
   },
-  "675968152ff4b3a343f1ffd50350779a4dfd2e4dc0bfbab71e7becb2a91a5712": {
-    "query": "\n        INSERT INTO journeys (from_id, to_id, person_id, vehicle_id, date, meters)\n        VALUES ($1, $2, $3, $4, $5, $6)",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Uuid",
-          "Uuid",
-          "Uuid",
-          "Date",
-          "Int4"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "72f0a036585cd2ecdf83b9062bc82ce7f6bf0aeb453a85c9d7fc6f2029c0388a": {
-    "query": "\n            SELECT COALESCE(SUM(d.meters), 0) AS total\n            FROM journeys j\n            JOIN distances d\n            ON j.from_id = d.from_id\n            AND j.to_id = d.to_id\n            WHERE j.date = $1\n            AND j.person_id = $2\n            AND j.vehicle_id = $3\n            ",
+  "54f4f1d1ec35d3dca30e4510a8233fb3658eedd9f5681175326de8aaf0c5e74f": {
+    "query": "\n            SELECT COALESCE(SUM(d.meters), 0) AS total\n            FROM journeys j\n            JOIN distances d\n            ON j.from_id = d.from_id\n            AND j.to_id = d.to_id\n            WHERE j.date = $1\n            AND j.driver_id = $2\n            AND j.vehicle_id = $3\n            AND j.id != $4\n            ",
     "describe": {
       "columns": [
         {
@@ -491,15 +345,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Date",
-          "Uuid",
-          "Uuid"
-        ]
+        "Left": ["Date", "Uuid", "Uuid", "Uuid"]
       },
-      "nullable": [
-        null
-      ]
+      "nullable": [null]
     }
   },
   "7511687b792d3c4fe6e9b6604c40df50864cc3b7c63b7154cc2e77da142217b5": {
@@ -507,137 +355,23 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
       "nullable": []
     }
   },
-  "88ca3840c369455c0ba1fb199fb36ff016fb5de8c73bc67990d6ba460d0a44d6": {
-    "query": "\n        SELECT *\n        FROM people\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "name",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 2,
-          "name": "limit_distance",
-          "type_info": "Bool"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "969681d85372ace3a26955273b3c4b5a10a1040fa3e0a22e4ea5820006d9db4a": {
-    "query": "\n        DELETE FROM people\n        WHERE id = $1\n        ",
+  "9171622ae81e1446a3fdcb0cb7bdd6225d710dc505cf94be4b57bff23662021c": {
+    "query": "\n        DELETE FROM drivers\n        WHERE id = $1\n        ",
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
       "nullable": []
     }
   },
-  "9ec7dc47e7ea2d9eaf1d569bea171aa76cea7e035cf16137a966060b3e9e7b76": {
-    "query": "\n        DELETE FROM vehicles\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "9fed28fe53860e7143b7ab837187e17de7a2bd7a9bad4b8734a6eb1ec0308227": {
-    "query": "\n        SELECT *\n        FROM people\n        WHERE user_id = $1\n        ORDER BY name\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "name",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 2,
-          "name": "limit_distance",
-          "type_info": "Bool"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "ad1c366c2b9f8caba09918c0b647e868f501728f3ac2422b450c13027ada6b90": {
-    "query": "\n        INSERT INTO people (name, limit_distance, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Bytea",
-          "Bool",
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false
-      ]
-    }
-  },
-  "af33f2794f26b17c8f12c5210fdbdf1894b7963b50d6c52fc6f2ca4fd6151412": {
-    "query": "\n        SELECT COALESCE(SUM(d.meters), 0) AS total\n        FROM journeys j\n        JOIN distances d\n        ON j.from_id = d.from_id\n        AND j.to_id = d.to_id\n        WHERE extract(year FROM j.date) = $1\n        AND j.person_id = $2\n        AND j.vehicle_id = $3\n        ",
+  "9c812b7c908fe9693bc56341851fea83c41e59fd117db8887e820a0e272f7d0e": {
+    "query": "\n            SELECT COALESCE(SUM(d.meters), 0) AS total\n            FROM journeys j\n            JOIN distances d\n            ON j.from_id = d.from_id\n            AND j.to_id = d.to_id\n            WHERE j.date = $1\n            AND j.driver_id = $2\n            AND j.vehicle_id = $3\n            ",
     "describe": {
       "columns": [
         {
@@ -647,15 +381,81 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Float8",
-          "Uuid",
-          "Uuid"
-        ]
+        "Left": ["Date", "Uuid", "Uuid"]
       },
-      "nullable": [
-        null
-      ]
+      "nullable": [null]
+    }
+  },
+  "9ec7dc47e7ea2d9eaf1d569bea171aa76cea7e035cf16137a966060b3e9e7b76": {
+    "query": "\n        DELETE FROM vehicles\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": ["Uuid"]
+      },
+      "nullable": []
+    }
+  },
+  "ac87f41bdec751e63f9068c718d04815b9304e4eb0b87a08e2ecbfd0d8d829dd": {
+    "query": "\n        SELECT *\n        FROM drivers\n        WHERE user_id = $1\n        ORDER BY name\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "limit_distance",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "default_vehicle_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 5,
+          "name": "default_from_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 6,
+          "name": "default_to_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": ["Uuid"]
+      },
+      "nullable": [false, false, false, false, true, true, true]
+    }
+  },
+  "af2fcb9fa3ffd88c238747656f92e61928658777813a677b87bed24f8db138cf": {
+    "query": "\n        SELECT COALESCE(SUM(d.meters), 0) AS total\n        FROM journeys j\n        JOIN distances d\n        ON j.from_id = d.from_id\n        AND j.to_id = d.to_id\n        WHERE extract(year FROM j.date) = $1\n        AND j.driver_id = $2\n        AND j.vehicle_id = $3\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "total",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": ["Float8", "Uuid", "Uuid"]
+      },
+      "nullable": [null]
     }
   },
   "b830c7c981089f66e920e5b36c288baf618c63e95b584621a895a4a258dc922e": {
@@ -663,11 +463,25 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
       "nullable": []
+    }
+  },
+  "c2b79b02f924dfc6b81d4c7ff10a6189e5ddded786499c2dc0a5aeace9f05628": {
+    "query": "\n        INSERT INTO drivers (name, limit_distance, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": ["Bytea", "Bool", "Uuid"]
+      },
+      "nullable": [false]
     }
   },
   "cf6ea27179e543715eaa00a6f19d04d2c6c8d4c8314caebc120135bfb8c29bc6": {
@@ -675,11 +489,17 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid",
-          "Uuid",
-          "Int4"
-        ]
+        "Left": ["Uuid", "Uuid", "Int4"]
+      },
+      "nullable": []
+    }
+  },
+  "e0e4a96d863d3aa164d6bedf13c810bf7468dc538180dcdef1102f23dc008f21": {
+    "query": "\n        UPDATE journeys\n        SET from_id = $2, to_id = $3, driver_id = $4, vehicle_id = $5, date = $6, meters = $7\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": ["Uuid", "Uuid", "Uuid", "Uuid", "Uuid", "Date", "Int4"]
       },
       "nullable": []
     }
@@ -689,9 +509,7 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": [
-          "Uuid"
-        ]
+        "Left": ["Uuid"]
       },
       "nullable": []
     }
@@ -707,17 +525,9 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Bytea",
-          "Int2",
-          "Bool",
-          "Int2",
-          "Uuid"
-        ]
+        "Left": ["Bytea", "Int2", "Bool", "Int2", "Uuid"]
       },
-      "nullable": [
-        false
-      ]
+      "nullable": [false]
     }
   },
   "f7621d30a49ae5e6b5be8110b2beb45a653267e0ed4e0d6bc5d7e54cfd5a89f5": {
@@ -781,25 +591,19 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Int2",
-          "Int2",
-          "Int2"
-        ]
+        "Left": ["Int2", "Int2", "Int2"]
       },
-      "nullable": [
-        false,
-        false,
-        true,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
+      "nullable": [false, false, true, true, false, false, false, false, false, false, false]
+    }
+  },
+  "fbb0b8121413dfacbd649d5151efa0aa95096829ee4774d9238fbb7aa71c8eab": {
+    "query": "\n        INSERT INTO journeys (from_id, to_id, driver_id, vehicle_id, date, meters)\n        VALUES ($1, $2, $3, $4, $5, $6)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": ["Uuid", "Uuid", "Uuid", "Uuid", "Date", "Int4"]
+      },
+      "nullable": []
     }
   },
   "fc8e699a3318d1193da76b23e52a068ca0b44eb1b77909b5c646e19da70dce65": {
@@ -813,14 +617,55 @@
         }
       ],
       "parameters": {
-        "Left": [
-          "Varchar",
-          "Bpchar"
-        ]
+        "Left": ["Varchar", "Bpchar"]
       },
-      "nullable": [
-        false
-      ]
+      "nullable": [false]
+    }
+  },
+  "feaf455c7914320111a6971a4ee07600a34b224be9217f47358a9243d082f438": {
+    "query": "\n        SELECT *\n        FROM journeys\n        WHERE extract(year FROM date) = $1\n        AND driver_id = $2\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "from_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "to_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 3,
+          "name": "driver_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "vehicle_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 5,
+          "name": "date",
+          "type_info": "Date"
+        },
+        {
+          "ordinal": 6,
+          "name": "meters",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": ["Float8", "Uuid"]
+      },
+      "nullable": [false, false, false, false, false, false, false]
     }
   }
 }
