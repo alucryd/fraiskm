@@ -1,4 +1,6 @@
 use ring::pbkdf2;
+use tindercrypt::cryptors::RingCryptor;
+use tindercrypt::errors::Error;
 use tindercrypt::pbkdf2::derive_key;
 
 pub fn derive_pbkdf2_key(username: &str, password: &str) -> String {
@@ -18,6 +20,27 @@ pub fn derive_pbkdf2_key(username: &str, password: &str) -> String {
 
 pub fn decode_key(key: &str) -> Vec<u8> {
     base64::decode(key).unwrap()
+}
+
+pub fn encrypt_data(cryptor: &RingCryptor, key: &str, data: &str) -> Result<Vec<u8>, Error> {
+    Ok(cryptor.seal_with_key(&decode_key(&key), data.as_bytes())?)
+}
+
+pub fn decrypt_data(cryptor: &RingCryptor, key: &str, data: &[u8]) -> Result<String, Error> {
+    Ok(String::from_utf8_lossy(&cryptor.open(&decode_key(key), data)?).to_string())
+}
+
+pub fn reencrypt_data(
+    cryptor: &RingCryptor,
+    old_key: &str,
+    new_key: &str,
+    data: &[u8],
+) -> Result<Vec<u8>, Error> {
+    Ok(encrypt_data(
+        cryptor,
+        new_key,
+        &decrypt_data(cryptor, old_key, data)?,
+    )?)
 }
 
 pub fn hash_password(password: &str) -> String {

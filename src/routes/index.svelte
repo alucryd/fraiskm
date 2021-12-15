@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { get } from "svelte/store";
 
+  import Transition from "../components/Transition.svelte";
   import { me } from "../query.js";
   import { user } from "../store.js";
 
@@ -9,9 +10,11 @@
     await me();
 
     if (!get(user)) {
-      goto("/login", { replaceState: true });
+      goto("/signin", { replaceState: true });
     }
 
     return {};
   }
 </script>
+
+<Transition />

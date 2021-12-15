@@ -1,9 +1,11 @@
+use crate::util::*;
 use async_graphql::SimpleObject;
 use bigdecimal::BigDecimal;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use tindercrypt::cryptors::RingCryptor;
+use tindercrypt::errors::Error;
 use uuid::Uuid;
 
 #[derive(FromRow)]
@@ -53,12 +55,16 @@ pub struct AddressObject {
 }
 
 impl AddressObject {
-    pub fn from_db(address: Address, cryptor: &RingCryptor, key: &[u8]) -> AddressObject {
-        AddressObject {
+    pub fn from_db(
+        address: Address,
+        cryptor: &RingCryptor,
+        key: &str,
+    ) -> Result<AddressObject, Error> {
+        Ok(AddressObject {
             id: address.id,
-            title: String::from_utf8_lossy(&cryptor.open(key, &address.title).unwrap()).to_string(),
-            label: String::from_utf8_lossy(&cryptor.open(key, &address.label).unwrap()).to_string(),
-        }
+            title: decrypt_data(cryptor, key, &address.title)?,
+            label: decrypt_data(cryptor, key, &address.label)?,
+        })
     }
 }
 
@@ -103,14 +109,18 @@ pub struct VehicleObject {
 }
 
 impl VehicleObject {
-    pub fn from_db(vehicle: Vehicle, cryptor: &RingCryptor, key: &[u8]) -> VehicleObject {
-        VehicleObject {
+    pub fn from_db(
+        vehicle: Vehicle,
+        cryptor: &RingCryptor,
+        key: &str,
+    ) -> Result<VehicleObject, Error> {
+        Ok(VehicleObject {
             id: vehicle.id,
-            model: String::from_utf8_lossy(&cryptor.open(key, &vehicle.model).unwrap()).to_string(),
+            model: decrypt_data(cryptor, key, &vehicle.model)?,
             horsepower: vehicle.horsepower,
             electric: vehicle.electric,
             vehicle_type_id: vehicle.vehicle_type_id,
-        }
+        })
     }
 }
 
@@ -136,15 +146,19 @@ pub struct DriverObject {
 }
 
 impl DriverObject {
-    pub fn from_db(driver: Driver, cryptor: &RingCryptor, key: &[u8]) -> DriverObject {
-        DriverObject {
+    pub fn from_db(
+        driver: Driver,
+        cryptor: &RingCryptor,
+        key: &str,
+    ) -> Result<DriverObject, Error> {
+        Ok(DriverObject {
             id: driver.id,
-            name: String::from_utf8_lossy(&cryptor.open(key, &driver.name).unwrap()).to_string(),
+            name: decrypt_data(cryptor, key, &driver.name)?,
             limit_distance: driver.limit_distance,
             default_vehicle_id: driver.default_vehicle_id,
             default_from_id: driver.default_from_id,
             default_to_id: driver.default_to_id,
-        }
+        })
     }
 }
 

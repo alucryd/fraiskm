@@ -6,6 +6,7 @@ use async_graphql::{Context, Error, Object, Result};
 use async_std::sync::{Arc, Mutex};
 use chrono::NaiveDate;
 use sqlx::postgres::PgPool;
+use sqlx::Acquire;
 use tide::sessions::Session;
 use tindercrypt::cryptors::RingCryptor;
 use uuid::Uuid;
@@ -14,7 +15,7 @@ pub struct Mutation;
 
 #[Object]
 impl Mutation {
-    async fn login(
+    async fn signin(
         &self,
         ctx: &Context<'_>,
         #[graphql(validator(email))] username: String,
@@ -40,7 +41,7 @@ impl Mutation {
         }
     }
 
-    async fn logout(&self, ctx: &Context<'_>) -> Result<bool> {
+    async fn signout(&self, ctx: &Context<'_>) -> Result<bool> {
         ctx.data_unchecked::<Arc<Mutex<Session>>>()
             .lock()
             .await
@@ -48,11 +49,11 @@ impl Mutation {
         Ok(true)
     }
 
-    async fn add_user(
+    async fn signup(
         &self,
         ctx: &Context<'_>,
         #[graphql(validator(custom = "EmailValidator::new()"))] username: String,
-        password: String,
+        #[graphql(validator(custom = "PasswordValidator::new()"))] password: String,
     ) -> Result<UserObject> {
         create_user(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
@@ -60,7 +61,7 @@ impl Mutation {
             &blake3::hash(password.as_bytes()).to_hex(),
         )
         .await;
-        self.login(ctx, username, password).await
+        self.signin(ctx, username, password).await
     }
 
     async fn delete_user(&self, ctx: &Context<'_>) -> Result<bool> {
@@ -71,7 +72,7 @@ impl Mutation {
                 &id,
             )
             .await;
-            self.logout(ctx).await
+            self.signout(ctx).await
         } else {
             Err(Error::new("not logged in"))
         }
@@ -85,12 +86,54 @@ impl Mutation {
     ) -> Result<bool> {
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        let cryptor = ctx.data_unchecked::<RingCryptor>();
+        let old_key = session.get::<String>("key").unwrap();
         if let Some(id) = session.get::<Uuid>("id") {
             let user = find_user_by_id(&mut connection, &id).await;
             if hash_password(&old_password) != user.password_hash {
                 return Err(Error::new("invalid password"));
             }
-            update_user(&mut connection, &id, &hash_password(&new_password)).await;
+            let new_key = derive_pbkdf2_key(&user.username, &new_password);
+            let addresses = find_addresses_by_user_id(&mut connection, &id).await;
+            let drivers = find_drivers_by_user_id(&mut connection, &id).await;
+            let vehicles = find_vehicles_by_user_id(&mut connection, &id).await;
+            let mut transaction = Acquire::begin(&mut connection)
+                .await
+                .expect("Failed to begin transaction");
+            for address in addresses {
+                update_address(
+                    &mut transaction,
+                    &address.id,
+                    &reencrypt_data(cryptor, &old_key, &new_key, &address.title)?,
+                    &reencrypt_data(cryptor, &old_key, &new_key, &address.label)?,
+                )
+                .await;
+            }
+            for driver in drivers {
+                update_driver(
+                    &mut transaction,
+                    &driver.id,
+                    &reencrypt_data(cryptor, &old_key, &new_key, &driver.name)?,
+                    driver.limit_distance,
+                )
+                .await;
+            }
+            for vehicle in vehicles {
+                update_vehicle(
+                    &mut transaction,
+                    &vehicle.id,
+                    &reencrypt_data(cryptor, &old_key, &new_key, &vehicle.model)?,
+                    vehicle.horsepower,
+                    vehicle.electric,
+                    vehicle.vehicle_type_id,
+                )
+                .await;
+            }
+            update_user(&mut transaction, &id, &hash_password(&new_password)).await;
+            transaction
+                .commit()
+                .await
+                .expect("Failed to commit transaction");
             Ok(true)
         } else {
             Err(Error::new("not logged in"))
@@ -114,17 +157,13 @@ impl Mutation {
 
     async fn add_address(&self, ctx: &Context<'_>, title: String, label: String) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        let cryptor = ctx.data_unchecked::<RingCryptor>();
+        let key = session.get::<String>("key").unwrap();
         if let Some(id) = session.get::<Uuid>("id") {
             Ok(create_address(
                 &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                    &decode_key(&session.get::<String>("key").unwrap()),
-                    title.as_bytes(),
-                )?,
-                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                    &decode_key(&session.get::<String>("key").unwrap()),
-                    label.as_bytes(),
-                )?,
+                &encrypt_data(cryptor, &key, &title)?,
+                &encrypt_data(cryptor, &key, &label)?,
                 &id,
             )
             .await)
@@ -144,17 +183,13 @@ impl Mutation {
         if session.get::<Uuid>("id").is_none() {
             return Err(Error::new("not logged in"));
         }
+        let cryptor = ctx.data_unchecked::<RingCryptor>();
+        let key = session.get::<String>("key").unwrap();
         Ok(update_address(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                title.as_bytes(),
-            )?,
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                label.as_bytes(),
-            )?,
+            &encrypt_data(cryptor, &key, &title)?,
+            &encrypt_data(cryptor, &key, &label)?,
         )
         .await)
     }
@@ -181,9 +216,10 @@ impl Mutation {
         if let Some(id) = session.get::<Uuid>("id") {
             Ok(create_driver(
                 &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                    &decode_key(&session.get::<String>("key").unwrap()),
-                    name.as_bytes(),
+                &encrypt_data(
+                    ctx.data_unchecked::<RingCryptor>(),
+                    &session.get::<String>("key").unwrap(),
+                    &name,
                 )?,
                 limit_distance,
                 &id,
@@ -208,9 +244,10 @@ impl Mutation {
         Ok(update_driver(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                name.as_bytes(),
+            &encrypt_data(
+                ctx.data_unchecked::<RingCryptor>(),
+                &session.get::<String>("key").unwrap(),
+                &name,
             )?,
             limit_distance,
         )
@@ -241,9 +278,10 @@ impl Mutation {
         if let Some(id) = session.get::<Uuid>("id") {
             Ok(create_vehicle(
                 &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-                &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                    &decode_key(&session.get::<String>("key").unwrap()),
-                    model.as_bytes(),
+                &encrypt_data(
+                    ctx.data_unchecked::<RingCryptor>(),
+                    &session.get::<String>("key").unwrap(),
+                    &model,
                 )?,
                 horsepower,
                 electric,
@@ -272,9 +310,10 @@ impl Mutation {
         Ok(update_vehicle(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
-            &ctx.data_unchecked::<RingCryptor>().seal_with_key(
-                &decode_key(&session.get::<String>("key").unwrap()),
-                model.as_bytes(),
+            &encrypt_data(
+                ctx.data_unchecked::<RingCryptor>(),
+                &session.get::<String>("key").unwrap(),
+                &model,
             )?,
             horsepower,
             electric,

@@ -1,6 +1,5 @@
 use crate::database::*;
 use crate::model::*;
-use crate::util::*;
 use async_graphql::{ComplexObject, Context, Error, Object, Result};
 use async_std::sync::{Arc, Mutex};
 use bigdecimal::{BigDecimal, ToPrimitive, Zero};
@@ -59,8 +58,9 @@ impl QueryRoot {
                 AddressObject::from_db(
                     address,
                     ctx.data_unchecked::<RingCryptor>(),
-                    &decode_key(&session.get::<String>("key").unwrap()),
+                    &session.get::<String>("key").unwrap(),
                 )
+                .unwrap()
             })
             .collect())
         } else {
@@ -81,8 +81,9 @@ impl QueryRoot {
                 DriverObject::from_db(
                     driver,
                     ctx.data_unchecked::<RingCryptor>(),
-                    &decode_key(&session.get::<String>("key").unwrap()),
+                    &session.get::<String>("key").unwrap(),
                 )
+                .unwrap()
             })
             .collect())
         } else {
@@ -117,8 +118,9 @@ impl QueryRoot {
                 VehicleObject::from_db(
                     vehicle,
                     ctx.data_unchecked::<RingCryptor>(),
-                    &decode_key(&session.get::<String>("key").unwrap()),
+                    &session.get::<String>("key").unwrap(),
                 )
+                .unwrap()
             })
             .collect())
         } else {

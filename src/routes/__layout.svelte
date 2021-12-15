@@ -10,9 +10,7 @@
   } from "@fortawesome/free-solid-svg-icons";
   import "bootstrap/dist/css/bootstrap.min.css";
   import Fa from "svelte-fa";
-  import { fade } from "svelte/transition";
   import {
-    Col,
     Collapse,
     Container,
     Dropdown,
@@ -25,7 +23,6 @@
     Navbar,
     NavbarBrand,
     NavbarToggler,
-    Row,
   } from "sveltestrap";
 
   import { user } from "../store.js";
@@ -88,11 +85,5 @@
 </Navbar>
 
 <Container fluid>
-  <Row>
-    <Col>
-      <div in:fade out:fade>
-        <slot />
-      </div>
-    </Col>
-  </Row>
+  <slot />
 </Container>
