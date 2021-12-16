@@ -8,6 +8,7 @@ extern crate blake3;
 extern crate chrono;
 extern crate clap;
 extern crate dotenv;
+extern crate env_logger;
 extern crate http_types;
 extern crate mailchecker;
 extern crate rayon;
@@ -34,6 +35,7 @@ use dotenv::dotenv;
 #[async_std::main]
 async fn main() {
     dotenv().ok();
+    env_logger::init();
 
     let subcommands = vec![server::subcommand()];
     let matches = App::new(env!("CARGO_BIN_NAME"))

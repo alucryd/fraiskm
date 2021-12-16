@@ -2,7 +2,6 @@
   import { goto } from "$app/navigation";
   import { get } from "svelte/store";
 
-  import Transition from "../components/Transition.svelte";
   import { me } from "../query.js";
   import { user } from "../store.js";
 
@@ -16,5 +15,3 @@
     return {};
   }
 </script>
-
-<Transition />

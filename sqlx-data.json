@@ -11,9 +11,15 @@
         }
       ],
       "parameters": {
-        "Left": ["Bytea", "Bytea", "Uuid"]
+        "Left": [
+          "Bytea",
+          "Bytea",
+          "Uuid"
+        ]
       },
-      "nullable": [false]
+      "nullable": [
+        false
+      ]
     }
   },
   "0b8a0e245fa33d327d7fab2c17ae4b6b9bc2282f2aadf5a02eb49468a79345df": {
@@ -21,7 +27,13 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Bytea", "Int2", "Bool", "Int2"]
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Int2",
+          "Bool",
+          "Int2"
+        ]
       },
       "nullable": []
     }
@@ -52,9 +64,16 @@
         }
       ],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false, false]
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "28936c650a98d91aec100a60cdd35c09c78aabc9cd7b9ada9a433c5314bf9578": {
@@ -62,7 +81,10 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Uuid"]
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
       },
       "nullable": []
     }
@@ -72,7 +94,11 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Bytea", "Bool"]
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Bool"
+        ]
       },
       "nullable": []
     }
@@ -98,9 +124,15 @@
         }
       ],
       "parameters": {
-        "Left": ["Text"]
+        "Left": [
+          "Text"
+        ]
       },
-      "nullable": [false, false, false]
+      "nullable": [
+        false,
+        false,
+        false
+      ]
     }
   },
   "3f72e916f034fcf960d3165490a69a03a13dd9a12b2646e60b2f1d4799c03488": {
@@ -108,7 +140,11 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Bytea", "Bytea"]
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Bytea"
+        ]
       },
       "nullable": []
     }
@@ -118,7 +154,11 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Uuid", "Int4"]
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Int4"
+        ]
       },
       "nullable": []
     }
@@ -144,9 +184,15 @@
         }
       ],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false]
+      "nullable": [
+        false,
+        false,
+        false
+      ]
     }
   },
   "46831ddffcb6a5762157c950790c47494f941a6da2587ddb891ab23df43333d5": {
@@ -185,9 +231,31 @@
         }
       ],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false, false, false, false]
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "48390e2d21c954070cd2824ad8af161de7f1543182de2632b70a3aeee2d0aec7": {
+    "query": "\n        UPDATE users\n        SET username = $2\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar"
+        ]
+      },
+      "nullable": []
     }
   },
   "4899aa13d3dd8420eab00249baf00f7ef85041bd85afb0584574fb538cebcfa5": {
@@ -211,9 +279,16 @@
         }
       ],
       "parameters": {
-        "Left": ["Uuid", "Uuid"]
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false]
+      "nullable": [
+        false,
+        false,
+        false
+      ]
     }
   },
   "4a114257908933944f25d49443a29e4ca67def48872e1ef5d5c62e9ec41ec4db": {
@@ -234,7 +309,10 @@
       "parameters": {
         "Left": []
       },
-      "nullable": [false, false]
+      "nullable": [
+        false,
+        false
+      ]
     }
   },
   "4b8702ee52a64eb2dc7086e133d715919865a452b0aa8956b612151696737963": {
@@ -242,7 +320,10 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Bpchar"]
+        "Left": [
+          "Uuid",
+          "Bpchar"
+        ]
       },
       "nullable": []
     }
@@ -283,9 +364,18 @@
         }
       ],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false, false, false, false]
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "5178b105dce463524e022e7bbb9c90f7a8226dc4cf335e21946cedd7a49a6255": {
@@ -329,9 +419,19 @@
         }
       ],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false, false, true, true, true]
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
+      ]
     }
   },
   "54f4f1d1ec35d3dca30e4510a8233fb3658eedd9f5681175326de8aaf0c5e74f": {
@@ -345,9 +445,16 @@
         }
       ],
       "parameters": {
-        "Left": ["Date", "Uuid", "Uuid", "Uuid"]
+        "Left": [
+          "Date",
+          "Uuid",
+          "Uuid",
+          "Uuid"
+        ]
       },
-      "nullable": [null]
+      "nullable": [
+        null
+      ]
     }
   },
   "7511687b792d3c4fe6e9b6604c40df50864cc3b7c63b7154cc2e77da142217b5": {
@@ -355,7 +462,9 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
       "nullable": []
     }
@@ -365,7 +474,9 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
       "nullable": []
     }
@@ -381,9 +492,15 @@
         }
       ],
       "parameters": {
-        "Left": ["Date", "Uuid", "Uuid"]
+        "Left": [
+          "Date",
+          "Uuid",
+          "Uuid"
+        ]
       },
-      "nullable": [null]
+      "nullable": [
+        null
+      ]
     }
   },
   "9ec7dc47e7ea2d9eaf1d569bea171aa76cea7e035cf16137a966060b3e9e7b76": {
@@ -391,7 +508,9 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
       "nullable": []
     }
@@ -437,9 +556,19 @@
         }
       ],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false, false, true, true, true]
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true
+      ]
     }
   },
   "af2fcb9fa3ffd88c238747656f92e61928658777813a677b87bed24f8db138cf": {
@@ -453,9 +582,15 @@
         }
       ],
       "parameters": {
-        "Left": ["Float8", "Uuid", "Uuid"]
+        "Left": [
+          "Float8",
+          "Uuid",
+          "Uuid"
+        ]
       },
-      "nullable": [null]
+      "nullable": [
+        null
+      ]
     }
   },
   "b830c7c981089f66e920e5b36c288baf618c63e95b584621a895a4a258dc922e": {
@@ -463,7 +598,9 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
       "nullable": []
     }
@@ -479,9 +616,15 @@
         }
       ],
       "parameters": {
-        "Left": ["Bytea", "Bool", "Uuid"]
+        "Left": [
+          "Bytea",
+          "Bool",
+          "Uuid"
+        ]
       },
-      "nullable": [false]
+      "nullable": [
+        false
+      ]
     }
   },
   "cf6ea27179e543715eaa00a6f19d04d2c6c8d4c8314caebc120135bfb8c29bc6": {
@@ -489,7 +632,11 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Uuid", "Int4"]
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Int4"
+        ]
       },
       "nullable": []
     }
@@ -499,7 +646,15 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Uuid", "Uuid", "Uuid", "Uuid", "Date", "Int4"]
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Date",
+          "Int4"
+        ]
       },
       "nullable": []
     }
@@ -509,7 +664,9 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid"]
+        "Left": [
+          "Uuid"
+        ]
       },
       "nullable": []
     }
@@ -525,9 +682,17 @@
         }
       ],
       "parameters": {
-        "Left": ["Bytea", "Int2", "Bool", "Int2", "Uuid"]
+        "Left": [
+          "Bytea",
+          "Int2",
+          "Bool",
+          "Int2",
+          "Uuid"
+        ]
       },
-      "nullable": [false]
+      "nullable": [
+        false
+      ]
     }
   },
   "f7621d30a49ae5e6b5be8110b2beb45a653267e0ed4e0d6bc5d7e54cfd5a89f5": {
@@ -591,9 +756,25 @@
         }
       ],
       "parameters": {
-        "Left": ["Int2", "Int2", "Int2"]
+        "Left": [
+          "Int2",
+          "Int2",
+          "Int2"
+        ]
       },
-      "nullable": [false, false, true, true, false, false, false, false, false, false, false]
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "fbb0b8121413dfacbd649d5151efa0aa95096829ee4774d9238fbb7aa71c8eab": {
@@ -601,7 +782,14 @@
     "describe": {
       "columns": [],
       "parameters": {
-        "Left": ["Uuid", "Uuid", "Uuid", "Uuid", "Date", "Int4"]
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Date",
+          "Int4"
+        ]
       },
       "nullable": []
     }
@@ -617,9 +805,14 @@
         }
       ],
       "parameters": {
-        "Left": ["Varchar", "Bpchar"]
+        "Left": [
+          "Varchar",
+          "Bpchar"
+        ]
       },
-      "nullable": [false]
+      "nullable": [
+        false
+      ]
     }
   },
   "feaf455c7914320111a6971a4ee07600a34b224be9217f47358a9243d082f438": {
@@ -663,9 +856,20 @@
         }
       ],
       "parameters": {
-        "Left": ["Float8", "Uuid"]
+        "Left": [
+          "Float8",
+          "Uuid"
+        ]
       },
-      "nullable": [false, false, false, false, false, false, false]
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     }
   }
 }

@@ -5,6 +5,7 @@ use crate::validator::*;
 use async_graphql::{Context, Error, Object, Result};
 use async_std::sync::{Arc, Mutex};
 use chrono::NaiveDate;
+use log::debug;
 use sqlx::postgres::PgPool;
 use sqlx::Acquire;
 use tide::sessions::Session;
@@ -55,24 +56,44 @@ impl Mutation {
         #[graphql(validator(custom = "EmailValidator::new()"))] username: String,
         #[graphql(validator(custom = "PasswordValidator::new()"))] password: String,
     ) -> Result<UserObject> {
-        create_user(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &username,
-            &blake3::hash(password.as_bytes()).to_hex(),
-        )
-        .await;
-        self.signin(ctx, username, password).await
+        let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
+        if find_user_by_username(&mut connection, &username)
+            .await
+            .is_none()
+        {
+            create_user(&mut connection, &username, &hash_password(&password)).await;
+            self.signin(ctx, username, password).await
+        } else {
+            Err(Error::new("username already exists"))
+        }
     }
 
-    async fn delete_user(&self, ctx: &Context<'_>) -> Result<bool> {
+    async fn update_username(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(validator(email))] new_username: String,
+        password: String,
+    ) -> Result<bool> {
+        debug!("updating username");
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if let Some(id) = session.get::<Uuid>("id") {
-            delete_user_by_id(
+            let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
+            let user = find_user_by_id(&mut connection, &id).await;
+            if hash_password(&password) != user.password_hash {
+                return Err(Error::new("invalid password"));
+            }
+            if find_user_by_username(
                 &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-                &id,
+                &new_username,
             )
-            .await;
-            self.signout(ctx).await
+            .await
+            .is_none()
+            {
+                update_user_username(&mut connection, &id, &new_username).await;
+                Ok(true)
+            } else {
+                Err(Error::new("username already exists"))
+            }
         } else {
             Err(Error::new("not logged in"))
         }
@@ -81,16 +102,17 @@ impl Mutation {
     async fn update_password(
         &self,
         ctx: &Context<'_>,
-        old_password: String,
-        new_password: String,
+        password: String,
+        #[graphql(validator(custom = "PasswordValidator::new()"))] new_password: String,
     ) -> Result<bool> {
-        let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
+        debug!("updating password");
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        let cryptor = ctx.data_unchecked::<RingCryptor>();
-        let old_key = session.get::<String>("key").unwrap();
         if let Some(id) = session.get::<Uuid>("id") {
+            let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
+            let cryptor = ctx.data_unchecked::<RingCryptor>();
+            let key = session.get::<String>("key").unwrap();
             let user = find_user_by_id(&mut connection, &id).await;
-            if hash_password(&old_password) != user.password_hash {
+            if hash_password(&password) != user.password_hash {
                 return Err(Error::new("invalid password"));
             }
             let new_key = derive_pbkdf2_key(&user.username, &new_password);
@@ -104,8 +126,8 @@ impl Mutation {
                 update_address(
                     &mut transaction,
                     &address.id,
-                    &reencrypt_data(cryptor, &old_key, &new_key, &address.title)?,
-                    &reencrypt_data(cryptor, &old_key, &new_key, &address.label)?,
+                    &reencrypt_data(cryptor, &key, &new_key, &address.title)?,
+                    &reencrypt_data(cryptor, &key, &new_key, &address.label)?,
                 )
                 .await;
             }
@@ -113,7 +135,7 @@ impl Mutation {
                 update_driver(
                     &mut transaction,
                     &driver.id,
-                    &reencrypt_data(cryptor, &old_key, &new_key, &driver.name)?,
+                    &reencrypt_data(cryptor, &key, &new_key, &driver.name)?,
                     driver.limit_distance,
                 )
                 .await;
@@ -122,19 +144,33 @@ impl Mutation {
                 update_vehicle(
                     &mut transaction,
                     &vehicle.id,
-                    &reencrypt_data(cryptor, &old_key, &new_key, &vehicle.model)?,
+                    &reencrypt_data(cryptor, &key, &new_key, &vehicle.model)?,
                     vehicle.horsepower,
                     vehicle.electric,
                     vehicle.vehicle_type_id,
                 )
                 .await;
             }
-            update_user(&mut transaction, &id, &hash_password(&new_password)).await;
+            update_user_password_hash(&mut transaction, &id, &hash_password(&new_password)).await;
             transaction
                 .commit()
                 .await
                 .expect("Failed to commit transaction");
             Ok(true)
+        } else {
+            Err(Error::new("not logged in"))
+        }
+    }
+
+    async fn delete_user(&self, ctx: &Context<'_>) -> Result<bool> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if let Some(id) = session.get::<Uuid>("id") {
+            delete_user_by_id(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &id,
+            )
+            .await;
+            self.signout(ctx).await
         } else {
             Err(Error::new("not logged in"))
         }
@@ -157,9 +193,9 @@ impl Mutation {
 
     async fn add_address(&self, ctx: &Context<'_>, title: String, label: String) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        let cryptor = ctx.data_unchecked::<RingCryptor>();
-        let key = session.get::<String>("key").unwrap();
         if let Some(id) = session.get::<Uuid>("id") {
+            let cryptor = ctx.data_unchecked::<RingCryptor>();
+            let key = session.get::<String>("key").unwrap();
             Ok(create_address(
                 &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
                 &encrypt_data(cryptor, &key, &title)?,

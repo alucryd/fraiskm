@@ -41,7 +41,27 @@ pub async fn create_user(
     .id
 }
 
-pub async fn update_user(connection: &mut PgConnection, id: &Uuid, password_hash: &str) -> u64 {
+pub async fn update_user_username(connection: &mut PgConnection, id: &Uuid, username: &str) -> u64 {
+    sqlx::query!(
+        "
+        UPDATE users
+        SET username = $2
+        WHERE id = $1
+        ",
+        id,
+        username,
+    )
+    .execute(connection)
+    .await
+    .unwrap_or_else(|_| panic!("Error while updating user with id {}", id))
+    .rows_affected()
+}
+
+pub async fn update_user_password_hash(
+    connection: &mut PgConnection,
+    id: &Uuid,
+    password_hash: &str,
+) -> u64 {
     sqlx::query!(
         "
         UPDATE users

@@ -32,14 +32,14 @@ pub fn decrypt_data(cryptor: &RingCryptor, key: &str, data: &[u8]) -> Result<Str
 
 pub fn reencrypt_data(
     cryptor: &RingCryptor,
-    old_key: &str,
+    key: &str,
     new_key: &str,
     data: &[u8],
 ) -> Result<Vec<u8>, Error> {
     Ok(encrypt_data(
         cryptor,
         new_key,
-        &decrypt_data(cryptor, old_key, data)?,
+        &decrypt_data(cryptor, key, data)?,
     )?)
 }
 

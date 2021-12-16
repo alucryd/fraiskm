@@ -40,9 +40,9 @@
 </script>
 
 <Transition>
-  <Row>
-    <Col class="d-inline-flex">
-      <Card class="mx-auto text-center" style="min-width: 33em">
+  <Row class="justify-content-center">
+    <Col class="col-lg-4 col-md-6 col-sm-12">
+      <Card class="text-center">
         <CardHeader>
           <CardTitle class="mb-0">Connexion</CardTitle>
         </CardHeader>
@@ -58,7 +58,7 @@
                   name="email"
                   id="email"
                   placeholder="Adresse email"
-                  feedback="Adresse email inconnue"
+                  feedback="L'adresse email est inconnue"
                   bind:invalid={usernameInvalid}
                   bind:value={username}
                   required
@@ -75,7 +75,7 @@
                   name="password"
                   id="password"
                   placeholder="Mot de passe"
-                  feedback="Mot de passe invalide"
+                  feedback="Le mot de passe est invalide"
                   bind:invalid={passwordInvalid}
                   bind:value={password}
                   required
