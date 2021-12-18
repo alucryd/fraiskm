@@ -202,10 +202,6 @@ export async function updateDriver(driver) {
   `;
 
   await graphQLClient.request(mutation, driver);
-  // graphQLClient
-  //   .request(mutation, driver)
-  //   .then((data) => console.log(data))
-  //   .then((error) => console.log(error));
 }
 
 export async function deleteDriver(driver) {
