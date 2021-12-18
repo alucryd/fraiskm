@@ -44,6 +44,7 @@ pub struct Address {
     pub id: Uuid,
     pub title: Vec<u8>,
     pub label: Vec<u8>,
+    pub address_type: i16,
     pub user_id: Uuid,
 }
 
@@ -52,6 +53,7 @@ pub struct AddressObject {
     pub id: Uuid,
     pub title: String,
     pub label: String,
+    pub address_type: i16,
 }
 
 impl AddressObject {
@@ -64,28 +66,8 @@ impl AddressObject {
             id: address.id,
             title: decrypt_data(cryptor, key, &address.title)?,
             label: decrypt_data(cryptor, key, &address.label)?,
+            address_type: address.address_type,
         })
-    }
-}
-
-#[derive(FromRow)]
-pub struct VehicleType {
-    pub id: i16,
-    pub label: String,
-}
-
-#[derive(SimpleObject)]
-pub struct VehicleTypeObject {
-    pub id: i16,
-    pub label: String,
-}
-
-impl VehicleTypeObject {
-    pub fn from_db(vehicle_type: VehicleType) -> VehicleTypeObject {
-        VehicleTypeObject {
-            id: vehicle_type.id,
-            label: vehicle_type.label,
-        }
     }
 }
 
@@ -95,7 +77,7 @@ pub struct Vehicle {
     pub model: Vec<u8>,
     pub horsepower: i16,
     pub electric: bool,
-    pub vehicle_type_id: i16,
+    pub vehicle_type: i16,
     pub user_id: Uuid,
 }
 
@@ -105,7 +87,7 @@ pub struct VehicleObject {
     pub model: String,
     pub horsepower: i16,
     pub electric: bool,
-    pub vehicle_type_id: i16,
+    pub vehicle_type: i16,
 }
 
 impl VehicleObject {
@@ -119,7 +101,7 @@ impl VehicleObject {
             model: decrypt_data(cryptor, key, &vehicle.model)?,
             horsepower: vehicle.horsepower,
             electric: vehicle.electric,
-            vehicle_type_id: vehicle.vehicle_type_id,
+            vehicle_type: vehicle.vehicle_type,
         })
     }
 }
@@ -228,7 +210,7 @@ pub struct Scale {
     pub second_slice_multiplier: BigDecimal,
     pub third_slice_multiplier: BigDecimal,
     pub second_slice_fixed_amount: i16,
-    pub vehicle_type_id: i16,
+    pub vehicle_type: i16,
 }
 
 #[derive(SimpleObject)]

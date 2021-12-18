@@ -1,81 +1,5 @@
 {
   "db": "PostgreSQL",
-  "03e80e7a389ef8d64cc018adafe72be67d613de8627daaf1dea037552e08688e": {
-    "query": "\n        INSERT INTO addresses (title, label, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Bytea",
-          "Bytea",
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false
-      ]
-    }
-  },
-  "0b8a0e245fa33d327d7fab2c17ae4b6b9bc2282f2aadf5a02eb49468a79345df": {
-    "query": "\n        UPDATE vehicles\n        SET model = $2, horsepower = $3, electric = $4, vehicle_type_id = $5\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea",
-          "Int2",
-          "Bool",
-          "Int2"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "1274c8e80dda1bb151e109c754bc447a545747e95625d4afe4bcfe19ec50c1e3": {
-    "query": "\n        SELECT *\n        FROM addresses\n        WHERE user_id = $1\n        ORDER BY title\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "title",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 2,
-          "name": "label",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "28936c650a98d91aec100a60cdd35c09c78aabc9cd7b9ada9a433c5314bf9578": {
     "query": "\n        DELETE FROM distances\n        WHERE from_id = $1\n        AND to_id = $2\n        ",
     "describe": {
@@ -89,18 +13,54 @@
       "nullable": []
     }
   },
-  "353063db7d12fdd8791072d39dd90c0b69d243d26dd64e501e006935109d31d5": {
-    "query": "\n        UPDATE drivers\n        SET name = $2, limit_distance = $3\n        WHERE id = $1\n        ",
+  "314d4e414e94d821df31284d9e8e1dd757864c17cd7d26fd8e815afe5b64d89b": {
+    "query": "\n        SELECT *\n        FROM vehicles\n        WHERE user_id = $1\n        ORDER BY vehicle_type, model\n        ",
     "describe": {
-      "columns": [],
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "model",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "horsepower",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 3,
+          "name": "electric",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 4,
+          "name": "vehicle_type",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 5,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
       "parameters": {
         "Left": [
-          "Uuid",
-          "Bytea",
-          "Bool"
+          "Uuid"
         ]
       },
-      "nullable": []
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "3bf08be10ef97b209337773e69d2c8121f0c56e6714297a696e1f2e2f705a109": {
@@ -133,20 +93,6 @@
         false,
         false
       ]
-    }
-  },
-  "3f72e916f034fcf960d3165490a69a03a13dd9a12b2646e60b2f1d4799c03488": {
-    "query": "\n        UPDATE addresses\n        SET title = $2, label = $3\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea",
-          "Bytea"
-        ]
-      },
-      "nullable": []
     }
   },
   "4121a6316f1f9399b683fe4ff9ddeb0bc58dc5982c130a4f7bd6d65fdcfd1c3d": {
@@ -221,7 +167,7 @@
         },
         {
           "ordinal": 4,
-          "name": "vehicle_type_id",
+          "name": "vehicle_type",
           "type_info": "Int2"
         },
         {
@@ -291,30 +237,6 @@
       ]
     }
   },
-  "4a114257908933944f25d49443a29e4ca67def48872e1ef5d5c62e9ec41ec4db": {
-    "query": "\n        SELECT *\n        FROM vehicle_types\n        ORDER BY id\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 1,
-          "name": "label",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": []
-      },
-      "nullable": [
-        false,
-        false
-      ]
-    }
-  },
   "4b8702ee52a64eb2dc7086e133d715919865a452b0aa8956b612151696737963": {
     "query": "\n        UPDATE users\n        SET password_hash = $2\n        WHERE id = $1\n        ",
     "describe": {
@@ -326,56 +248,6 @@
         ]
       },
       "nullable": []
-    }
-  },
-  "4ee2a47d0f212e554272b193c6636d694baf3d507158867c51599cf22b7e203e": {
-    "query": "\n        SELECT *\n        FROM vehicles\n        WHERE user_id = $1\n        ORDER BY vehicle_type_id, model\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "model",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 2,
-          "name": "horsepower",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 3,
-          "name": "electric",
-          "type_info": "Bool"
-        },
-        {
-          "ordinal": 4,
-          "name": "vehicle_type_id",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 5,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
     }
   },
   "5178b105dce463524e022e7bbb9c90f7a8226dc4cf335e21946cedd7a49a6255": {
@@ -457,6 +329,65 @@
       ]
     }
   },
+  "66072c60d9fd22d3f3459344a288f13f8d17b26ac00d0b3c2c1b3312a36bc181": {
+    "query": "\n        SELECT *\n        FROM addresses\n        WHERE user_id = $1\n        ORDER BY address_type, title\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "label",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 3,
+          "name": "address_type",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 4,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "7451c182ae06da90593cca119396c4795015e259f4318c066d77fd1ec4e1625f": {
+    "query": "\n        UPDATE addresses\n        SET title = $2, label = $3, address_type = $4\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Bytea",
+          "Int2"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "7511687b792d3c4fe6e9b6604c40df50864cc3b7c63b7154cc2e77da142217b5": {
     "query": "\n        DELETE FROM journeys\n        WHERE id = $1\n        ",
     "describe": {
@@ -467,6 +398,88 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "7f27dd508c1c1492b373790ca9b627b090f90a6236218fdd31e14bcacfaff288": {
+    "query": "\n        SELECT *\n        FROM scales\n        WHERE year = $1\n        AND (\n            horsepower_min <= $2 OR horsepower_min IS NULL\n        ) AND (\n            horsepower_max >= $2 OR horsepower_max IS NULL\n        ) AND vehicle_type = $3\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "year",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 2,
+          "name": "horsepower_min",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 3,
+          "name": "horsepower_max",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 4,
+          "name": "first_threshold",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 5,
+          "name": "second_threshold",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 6,
+          "name": "first_slice_multiplier",
+          "type_info": "Numeric"
+        },
+        {
+          "ordinal": 7,
+          "name": "second_slice_multiplier",
+          "type_info": "Numeric"
+        },
+        {
+          "ordinal": 8,
+          "name": "third_slice_multiplier",
+          "type_info": "Numeric"
+        },
+        {
+          "ordinal": 9,
+          "name": "second_slice_fixed_amount",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 10,
+          "name": "vehicle_type",
+          "type_info": "Int2"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int2",
+          "Int2",
+          "Int2"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "9171622ae81e1446a3fdcb0cb7bdd6225d710dc505cf94be4b57bff23662021c": {
@@ -509,6 +522,23 @@
       "columns": [],
       "parameters": {
         "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "abd8d4ffd6acc7c071db1e81bee4f63e07a4c6cef67e3c697df23d6315d3843c": {
+    "query": "\n        UPDATE drivers\n        SET name = $2, limit_distance = $3, default_vehicle_id = $4, default_from_id = $5, default_to_id = $6\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Bool",
+          "Uuid",
+          "Uuid",
           "Uuid"
         ]
       },
@@ -571,6 +601,22 @@
       ]
     }
   },
+  "aea0534dc763b6119c087a6ac3820f4a7ae42cef7a0e789eae67f8d1b13e6aa9": {
+    "query": "\n        UPDATE vehicles\n        SET model = $2, horsepower = $3, electric = $4, vehicle_type = $5\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Int2",
+          "Bool",
+          "Int2"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "af2fcb9fa3ffd88c238747656f92e61928658777813a677b87bed24f8db138cf": {
     "query": "\n        SELECT COALESCE(SUM(d.meters), 0) AS total\n        FROM journeys j\n        JOIN distances d\n        ON j.from_id = d.from_id\n        AND j.to_id = d.to_id\n        WHERE extract(year FROM j.date) = $1\n        AND j.driver_id = $2\n        AND j.vehicle_id = $3\n        ",
     "describe": {
@@ -605,28 +651,6 @@
       "nullable": []
     }
   },
-  "c2b79b02f924dfc6b81d4c7ff10a6189e5ddded786499c2dc0a5aeace9f05628": {
-    "query": "\n        INSERT INTO drivers (name, limit_distance, user_id)\n        VALUES ($1, $2, $3)\n        RETURNING id",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Bytea",
-          "Bool",
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false
-      ]
-    }
-  },
   "cf6ea27179e543715eaa00a6f19d04d2c6c8d4c8314caebc120135bfb8c29bc6": {
     "query": "\n        UPDATE distances\n        SET meters = $3\n        WHERE from_id = $1\n        AND to_id = $2\n        ",
     "describe": {
@@ -639,6 +663,54 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "d97e230dcdb8ef4fed56ad9dba28b964d34deed76ac2739d8dd7bcc11d4f3e38": {
+    "query": "\n        INSERT INTO addresses (title, label, address_type, user_id)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Bytea",
+          "Bytea",
+          "Int2",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "dfb730096bdd3863d21f2054b748a7456e69d0c1e702ac25477086918a16dbf4": {
+    "query": "\n        INSERT INTO drivers (name, limit_distance, user_id, default_vehicle_id, default_from_id, default_to_id)\n        VALUES ($1, $2, $3, $4, $5, $6)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Bytea",
+          "Bool",
+          "Uuid",
+          "Uuid",
+          "Uuid",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false
+      ]
     }
   },
   "e0e4a96d863d3aa164d6bedf13c810bf7468dc538180dcdef1102f23dc008f21": {
@@ -669,112 +741,6 @@
         ]
       },
       "nullable": []
-    }
-  },
-  "f21e1f666ef2ffed464b899d332f1ef44a6ebe74fb18ca4e8fb63a77d8585db1": {
-    "query": "\n        INSERT INTO vehicles (model, horsepower, electric, vehicle_type_id, user_id)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Bytea",
-          "Int2",
-          "Bool",
-          "Int2",
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false
-      ]
-    }
-  },
-  "f7621d30a49ae5e6b5be8110b2beb45a653267e0ed4e0d6bc5d7e54cfd5a89f5": {
-    "query": "\n        SELECT *\n        FROM scales\n        WHERE year = $1\n        AND (\n            horsepower_min <= $2 OR horsepower_min IS NULL\n        ) AND (\n            horsepower_max >= $2 OR horsepower_max IS NULL\n        ) AND vehicle_type_id = $3\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "year",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 2,
-          "name": "horsepower_min",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 3,
-          "name": "horsepower_max",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 4,
-          "name": "first_threshold",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 5,
-          "name": "second_threshold",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 6,
-          "name": "first_slice_multiplier",
-          "type_info": "Numeric"
-        },
-        {
-          "ordinal": 7,
-          "name": "second_slice_multiplier",
-          "type_info": "Numeric"
-        },
-        {
-          "ordinal": 8,
-          "name": "third_slice_multiplier",
-          "type_info": "Numeric"
-        },
-        {
-          "ordinal": 9,
-          "name": "second_slice_fixed_amount",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 10,
-          "name": "vehicle_type_id",
-          "type_info": "Int2"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int2",
-          "Int2",
-          "Int2"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        true,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
     }
   },
   "fbb0b8121413dfacbd649d5151efa0aa95096829ee4774d9238fbb7aa71c8eab": {
@@ -808,6 +774,30 @@
         "Left": [
           "Varchar",
           "Bpchar"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "fd843800e84db104b2d8debb4737d5e2c70bca5a8d93ae281c20f7b0976a1053": {
+    "query": "\n        INSERT INTO vehicles (model, horsepower, electric, vehicle_type, user_id)\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Bytea",
+          "Int2",
+          "Bool",
+          "Int2",
+          "Uuid"
         ]
       },
       "nullable": [

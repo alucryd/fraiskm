@@ -91,20 +91,6 @@ impl QueryRoot {
         }
     }
 
-    async fn vehicle_types(&self, ctx: &Context<'_>) -> Result<Vec<VehicleTypeObject>> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        if session.get::<Uuid>("id").is_none() {
-            return Err(Error::new("not logged in"));
-        }
-        Ok(
-            find_vehicle_types(&mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap())
-                .await
-                .into_iter()
-                .map(|vehicle_type| VehicleTypeObject::from_db(vehicle_type))
-                .collect(),
-        )
-    }
-
     async fn vehicles(&self, ctx: &Context<'_>) -> Result<Vec<VehicleObject>> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if let Some(id) = session.get::<Uuid>("id") {
@@ -160,11 +146,11 @@ impl QueryRoot {
         }
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
         let vehicle = find_vehicle_by_id(&mut connection, &vehicle_id).await;
-        let scale = find_scale_by_year_and_horsepower_and_vehicle_type_id(
+        let scale = find_scale_by_year_and_horsepower_and_vehicle_type(
             &mut connection,
             year,
             vehicle.horsepower,
-            vehicle.vehicle_type_id,
+            vehicle.vehicle_type,
         )
         .await;
         let distance = compute_total_distance_by_year_and_driver_id_and_vehicle_id(

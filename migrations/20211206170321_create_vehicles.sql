@@ -5,8 +5,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
     model BYTEA NOT NULL,
     horsepower SMALLINT NOT NULL,
     electric BOOLEAN NOT NULL DEFAULT FALSE,
-    vehicle_type_id SMALLSERIAL NOT NULL, 
+    vehicle_type SMALLINT NOT NULL, 
     user_id UUID NOT NULL,
-    FOREIGN KEY (vehicle_type_id) REFERENCES vehicle_types(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

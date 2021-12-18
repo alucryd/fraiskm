@@ -20,23 +20,28 @@
 
   import Transition from "../components/Transition.svelte";
   import { signin } from "../mutation.js";
+  import { getAddresses, getDrivers, getVehicles } from "../query.js";
 
   let username = "";
   let password = "";
+
   let errorMessage = "";
 
   $: usernameInvalid = errorMessage == "unknown username";
   $: passwordInvalid = errorMessage == "invalid password";
 
-  async function onSubmit(event) {
+  const onSubmit = async (event) => {
     event.preventDefault();
     try {
       await signin(username, password);
+      await getAddresses();
+      await getVehicles();
+      await getDrivers();
       goto("/", { replaceState: false });
     } catch (error) {
       errorMessage = error.response.errors[0].message;
     }
-  }
+  };
 </script>
 
 <Transition>

@@ -31,6 +31,7 @@
   let password = "";
   let newPasswordOne = "";
   let newPasswordTwo = "";
+
   let errorMessage = "";
 
   $: passwordInvalid = errorMessage == "invalid password";
@@ -52,6 +53,9 @@
     try {
       await updatePassword(password, newPasswordOne);
       isOpen = false;
+      password = "";
+      newPasswordOne = "";
+      newPasswordTwo = "";
     } catch (error) {
       errorMessage = error.response.errors[0].message;
     }

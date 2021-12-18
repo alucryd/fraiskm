@@ -1,7 +1,14 @@
+use crate::database::*;
 use ring::pbkdf2;
+use sqlx::postgres::PgConnection;
 use tindercrypt::cryptors::RingCryptor;
 use tindercrypt::errors::Error;
 use tindercrypt::pbkdf2::derive_key;
+use uuid::Uuid;
+
+pub fn hash_password(password: &str) -> String {
+    blake3::hash(password.as_bytes()).to_hex().to_string()
+}
 
 pub fn derive_pbkdf2_key(username: &str, password: &str) -> String {
     let digest_algo = pbkdf2::PBKDF2_HMAC_SHA256;
@@ -43,6 +50,50 @@ pub fn reencrypt_data(
     )?)
 }
 
-pub fn hash_password(password: &str) -> String {
-    blake3::hash(password.as_bytes()).to_hex().to_string()
+pub async fn reencrypt_all_data(
+    transaction: &mut PgConnection,
+    cryptor: &RingCryptor<'_>,
+    key: &str,
+    id: &Uuid,
+    username: &str,
+    password: &str,
+) -> Result<(), Error> {
+    let new_key = derive_pbkdf2_key(username, password);
+    let addresses = find_addresses_by_user_id(transaction, id).await;
+    let drivers = find_drivers_by_user_id(transaction, id).await;
+    let vehicles = find_vehicles_by_user_id(transaction, id).await;
+    for address in addresses {
+        update_address(
+            transaction,
+            &address.id,
+            &reencrypt_data(cryptor, &key, &new_key, &address.title)?,
+            &reencrypt_data(cryptor, &key, &new_key, &address.label)?,
+            address.address_type,
+        )
+        .await;
+    }
+    for driver in drivers {
+        update_driver(
+            transaction,
+            &driver.id,
+            &reencrypt_data(cryptor, &key, &new_key, &driver.name)?,
+            driver.limit_distance,
+            driver.default_vehicle_id.as_ref(),
+            driver.default_from_id.as_ref(),
+            driver.default_to_id.as_ref(),
+        )
+        .await;
+    }
+    for vehicle in vehicles {
+        update_vehicle(
+            transaction,
+            &vehicle.id,
+            &reencrypt_data(cryptor, &key, &new_key, &vehicle.model)?,
+            vehicle.horsepower,
+            vehicle.electric,
+            vehicle.vehicle_type,
+        )
+        .await;
+    }
+    Ok(())
 }

@@ -1,6 +1,6 @@
 import { GraphQLClient, gql } from "graphql-request";
 
-import { addresses, drivers, user, vehicleTypes, vehicles } from "./store.js";
+import { addresses, drivers, user, vehicles } from "./store.js";
 
 const endpoint = "/graphql";
 const graphQLClient = new GraphQLClient(endpoint);
@@ -14,12 +14,8 @@ export async function me() {
     }
   `;
 
-  try {
-    const data = await graphQLClient.request(query);
-    user.set(data.me);
-  } catch (error) {
-    console.log(error);
-  }
+  const data = await graphQLClient.request(query);
+  user.set(data.me);
 }
 
 export async function getAddresses() {
@@ -29,27 +25,13 @@ export async function getAddresses() {
         id
         title
         label
+        addressType
       }
     }
   `;
 
   const data = await graphQLClient.request(query);
   addresses.set(data.addresses);
-}
-
-export async function getDrivers() {
-  const query = gql`
-    {
-      drivers {
-        id
-        name
-        limitDistance
-      }
-    }
-  `;
-
-  const data = await graphQLClient.request(query);
-  drivers.set(data.drivers);
 }
 
 export async function getVehicles() {
@@ -60,7 +42,7 @@ export async function getVehicles() {
         model
         horsepower
         electric
-        vehicleTypeId
+        vehicleType
       }
     }
   `;
@@ -69,16 +51,20 @@ export async function getVehicles() {
   vehicles.set(data.vehicles);
 }
 
-export async function getVehicleTypes() {
+export async function getDrivers() {
   const query = gql`
     {
-      vehicleTypes {
+      drivers {
         id
-        label
+        name
+        limitDistance
+        defaultVehicleId,
+        defaultFromId,
+        defaultToId,
       }
     }
   `;
 
   const data = await graphQLClient.request(query);
-  vehicleTypes.set(data.vehicleTypes);
+  drivers.set(data.drivers);
 }

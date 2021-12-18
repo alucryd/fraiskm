@@ -20,6 +20,7 @@
 
   let newUsername = "";
   let password = "";
+
   let errorMessage = "";
 
   $: usernameInvalid = errorMessage == "username already exists";
@@ -30,6 +31,8 @@
     try {
       await updateUsername(newUsername, password);
       isOpen = false;
+      newUsername = "";
+      password = "";
     } catch (error) {
       errorMessage = error.response.errors[0].message;
     }

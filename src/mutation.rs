@@ -78,6 +78,8 @@ impl Mutation {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if let Some(id) = session.get::<Uuid>("id") {
             let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
+            let cryptor = ctx.data_unchecked::<RingCryptor>();
+            let key = session.get::<String>("key").unwrap();
             let user = find_user_by_id(&mut connection, &id).await;
             if hash_password(&password) != user.password_hash {
                 return Err(Error::new("invalid password"));
@@ -89,7 +91,23 @@ impl Mutation {
             .await
             .is_none()
             {
-                update_user_username(&mut connection, &id, &new_username).await;
+                let mut transaction = Acquire::begin(&mut connection)
+                    .await
+                    .expect("Failed to begin transaction");
+                reencrypt_all_data(
+                    &mut transaction,
+                    cryptor,
+                    &key,
+                    &id,
+                    &new_username,
+                    &password,
+                )
+                .await?;
+                update_user_username(&mut transaction, &id, &new_username).await;
+                transaction
+                    .commit()
+                    .await
+                    .expect("Failed to commit transaction");
                 Ok(true)
             } else {
                 Err(Error::new("username already exists"))
@@ -115,42 +133,18 @@ impl Mutation {
             if hash_password(&password) != user.password_hash {
                 return Err(Error::new("invalid password"));
             }
-            let new_key = derive_pbkdf2_key(&user.username, &new_password);
-            let addresses = find_addresses_by_user_id(&mut connection, &id).await;
-            let drivers = find_drivers_by_user_id(&mut connection, &id).await;
-            let vehicles = find_vehicles_by_user_id(&mut connection, &id).await;
             let mut transaction = Acquire::begin(&mut connection)
                 .await
                 .expect("Failed to begin transaction");
-            for address in addresses {
-                update_address(
-                    &mut transaction,
-                    &address.id,
-                    &reencrypt_data(cryptor, &key, &new_key, &address.title)?,
-                    &reencrypt_data(cryptor, &key, &new_key, &address.label)?,
-                )
-                .await;
-            }
-            for driver in drivers {
-                update_driver(
-                    &mut transaction,
-                    &driver.id,
-                    &reencrypt_data(cryptor, &key, &new_key, &driver.name)?,
-                    driver.limit_distance,
-                )
-                .await;
-            }
-            for vehicle in vehicles {
-                update_vehicle(
-                    &mut transaction,
-                    &vehicle.id,
-                    &reencrypt_data(cryptor, &key, &new_key, &vehicle.model)?,
-                    vehicle.horsepower,
-                    vehicle.electric,
-                    vehicle.vehicle_type_id,
-                )
-                .await;
-            }
+            reencrypt_all_data(
+                &mut transaction,
+                cryptor,
+                &key,
+                &id,
+                &user.username,
+                &new_password,
+            )
+            .await?;
             update_user_password_hash(&mut transaction, &id, &hash_password(&new_password)).await;
             transaction
                 .commit()
@@ -191,7 +185,13 @@ impl Mutation {
         Ok(features.into_iter().map(|f| f.properties.label).collect())
     }
 
-    async fn add_address(&self, ctx: &Context<'_>, title: String, label: String) -> Result<Uuid> {
+    async fn add_address(
+        &self,
+        ctx: &Context<'_>,
+        title: String,
+        label: String,
+        address_type: i16,
+    ) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if let Some(id) = session.get::<Uuid>("id") {
             let cryptor = ctx.data_unchecked::<RingCryptor>();
@@ -200,6 +200,7 @@ impl Mutation {
                 &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
                 &encrypt_data(cryptor, &key, &title)?,
                 &encrypt_data(cryptor, &key, &label)?,
+                address_type,
                 &id,
             )
             .await)
@@ -214,6 +215,7 @@ impl Mutation {
         id: Uuid,
         title: String,
         label: String,
+        address_type: i16,
     ) -> Result<u64> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if session.get::<Uuid>("id").is_none() {
@@ -226,6 +228,7 @@ impl Mutation {
             &id,
             &encrypt_data(cryptor, &key, &title)?,
             &encrypt_data(cryptor, &key, &label)?,
+            address_type,
         )
         .await)
     }
@@ -242,73 +245,13 @@ impl Mutation {
         .await)
     }
 
-    async fn add_driver(
-        &self,
-        ctx: &Context<'_>,
-        name: String,
-        limit_distance: bool,
-    ) -> Result<Uuid> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        if let Some(id) = session.get::<Uuid>("id") {
-            Ok(create_driver(
-                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-                &encrypt_data(
-                    ctx.data_unchecked::<RingCryptor>(),
-                    &session.get::<String>("key").unwrap(),
-                    &name,
-                )?,
-                limit_distance,
-                &id,
-            )
-            .await)
-        } else {
-            Err(Error::new("not logged in"))
-        }
-    }
-
-    async fn update_driver(
-        &self,
-        ctx: &Context<'_>,
-        id: Uuid,
-        name: String,
-        limit_distance: bool,
-    ) -> Result<u64> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        if session.get::<Uuid>("id").is_none() {
-            return Err(Error::new("not logged in"));
-        }
-        Ok(update_driver(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &id,
-            &encrypt_data(
-                ctx.data_unchecked::<RingCryptor>(),
-                &session.get::<String>("key").unwrap(),
-                &name,
-            )?,
-            limit_distance,
-        )
-        .await)
-    }
-
-    async fn delete_driver(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        if session.get::<Uuid>("id").is_none() {
-            return Err(Error::new("not logged in"));
-        }
-        Ok(delete_driver_by_id(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &id,
-        )
-        .await)
-    }
-
     async fn add_vehicle(
         &self,
         ctx: &Context<'_>,
         model: String,
         horsepower: i16,
         electric: bool,
-        vehicle_type_id: i16,
+        vehicle_type: i16,
     ) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if let Some(id) = session.get::<Uuid>("id") {
@@ -321,7 +264,7 @@ impl Mutation {
                 )?,
                 horsepower,
                 electric,
-                vehicle_type_id,
+                vehicle_type,
                 &id,
             )
             .await)
@@ -337,7 +280,7 @@ impl Mutation {
         model: String,
         horsepower: i16,
         electric: bool,
-        vehicle_type_id: i16,
+        vehicle_type: i16,
     ) -> Result<u64> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if session.get::<Uuid>("id").is_none() {
@@ -353,7 +296,7 @@ impl Mutation {
             )?,
             horsepower,
             electric,
-            vehicle_type_id,
+            vehicle_type,
         )
         .await)
     }
@@ -364,6 +307,78 @@ impl Mutation {
             return Err(Error::new("not logged in"));
         }
         Ok(delete_vehicle_by_id(
+            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+            &id,
+        )
+        .await)
+    }
+
+    async fn add_driver(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+        limit_distance: bool,
+        default_vehicle_id: Option<Uuid>,
+        default_from_id: Option<Uuid>,
+        default_to_id: Option<Uuid>,
+    ) -> Result<Uuid> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if let Some(id) = session.get::<Uuid>("id") {
+            Ok(create_driver(
+                &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+                &encrypt_data(
+                    ctx.data_unchecked::<RingCryptor>(),
+                    &session.get::<String>("key").unwrap(),
+                    &name,
+                )?,
+                limit_distance,
+                &id,
+                default_vehicle_id.as_ref(),
+                default_from_id.as_ref(),
+                default_to_id.as_ref(),
+            )
+            .await)
+        } else {
+            Err(Error::new("not logged in"))
+        }
+    }
+
+    async fn update_driver(
+        &self,
+        ctx: &Context<'_>,
+        id: Uuid,
+        name: String,
+        limit_distance: bool,
+        default_vehicle_id: Option<Uuid>,
+        default_from_id: Option<Uuid>,
+        default_to_id: Option<Uuid>,
+    ) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
+        Ok(update_driver(
+            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+            &id,
+            &encrypt_data(
+                ctx.data_unchecked::<RingCryptor>(),
+                &session.get::<String>("key").unwrap(),
+                &name,
+            )?,
+            limit_distance,
+            default_vehicle_id.as_ref(),
+            default_from_id.as_ref(),
+            default_to_id.as_ref(),
+        )
+        .await)
+    }
+
+    async fn delete_driver(&self, ctx: &Context<'_>, id: Uuid) -> Result<u64> {
+        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
+        if session.get::<Uuid>("id").is_none() {
+            return Err(Error::new("not logged in"));
+        }
+        Ok(delete_driver_by_id(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
         )

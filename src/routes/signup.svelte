@@ -30,10 +30,12 @@
     passwordUppercaseRegex,
     signup,
   } from "../mutation.js";
+  import { getAddresses, getDrivers, getVehicles } from "../query.js";
 
   let username = "";
   let passwordOne = "";
   let passwordTwo = "";
+
   let errorMessage = "";
 
   $: usernameInvalid = errorMessage == "username already exists";
@@ -50,15 +52,18 @@
     !passwordLengthInvalid;
   $: passwordMismatch = passwordTwo && passwordTwo != passwordOne;
 
-  async function onSubmit(event) {
+  const onSubmit = async (event) => {
     event.preventDefault();
     try {
       await signup(username, passwordOne);
+      await getAddresses();
+      await getVehicles();
+      await getDrivers();
       goto("/", { replaceState: false });
     } catch (error) {
       errorMessage = error.response.errors[0].message;
     }
-  }
+  };
 </script>
 
 <Transition>

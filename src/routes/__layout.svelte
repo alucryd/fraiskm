@@ -13,6 +13,7 @@
     faUsers,
   } from "@fortawesome/free-solid-svg-icons";
   import "bootstrap/dist/css/bootstrap.min.css";
+  import { onMount } from "svelte";
   import Fa from "svelte-fa";
   import {
     Collapse,
@@ -32,24 +33,46 @@
   import PasswordModal from "../components/PasswordModal.svelte";
   import UsernameModal from "../components/UsernameModal.svelte";
   import { signout } from "../mutation.js";
+  import { getAddresses, getDrivers, getVehicles, me } from "../query.js";
   import { user } from "../store.js";
 
-  let isNavOpen = false;
-  let isUsernameModalOpen = false;
-  let isPasswordModalOpen = false;
+  let isUpperNavOpen = false;
 
-  function handleUpdate(event) {
-    isNavOpen = event.detail.isOpen;
+  function handleUpperNavUpdate(event) {
+    isUpperNavOpen = event.detail.isOpen;
   }
 
+  let isLowerNavOpen = false;
+
+  function handleLowerNavUpdate(event) {
+    isLowerNavOpen = event.detail.isOpen;
+  }
+
+  let isUsernameModalOpen = false;
   const toggleUsernameModal = () => (isUsernameModalOpen = !isUsernameModalOpen);
+
+  let isPasswordModalOpen = false;
   const togglePasswordModal = () => (isPasswordModalOpen = !isPasswordModalOpen);
 
-  async function onSignout(event) {
+  const onSignout = async (event) => {
     event.preventDefault();
     await signout();
     goto("/signin", { replaceState: false });
-  }
+  };
+
+  onMount(async () => {
+    console.log($user);
+    if (!$user) {
+      try {
+        await me();
+        await getAddresses();
+        await getVehicles();
+        await getDrivers();
+      } catch (error) {
+        goto("/signin", { replaceState: true });
+      }
+    }
+  });
 </script>
 
 <div class="d-flex flex-column min-vh-100">
@@ -59,13 +82,13 @@
       fraiskm
     </NavbarBrand>
     {#if $user}
-      <NavbarToggler on:click={() => (isNavOpen = !isNavOpen)} />
-      <Collapse isOpen={isNavOpen} navbar expand="md" on:update={handleUpdate}>
+      <NavbarToggler on:click={() => (isUpperNavOpen = !isUpperNavOpen)} />
+      <Collapse isOpen={isUpperNavOpen} navbar expand="md" on:update={handleUpperNavUpdate}>
         <Nav navbar class="me-auto">
           <NavItem>
-            <NavLink href="/drivers">
-              <Fa icon={faUsers} />
-              Mes conducteurs
+            <NavLink href="/addresses">
+              <Fa icon={faMapMarkerAlt} />
+              Mes adresses
             </NavLink>
           </NavItem>
           <NavItem>
@@ -75,9 +98,9 @@
             </NavLink>
           </NavItem>
           <NavItem>
-            <NavLink href="/adresses">
-              <Fa icon={faMapMarkerAlt} />
-              Mes adresses
+            <NavLink href="/drivers">
+              <Fa icon={faUsers} />
+              Mes conducteurs
             </NavLink>
           </NavItem>
         </Nav>
@@ -115,26 +138,44 @@
   <PasswordModal isOpen={isPasswordModalOpen} toggle={togglePasswordModal} />
 
   <Navbar color="dark" dark expand="md" class="mt-3">
-    <NavbarBrand href="/">Copyright © 2021 Maxime Gauduin</NavbarBrand>
-    <Nav navbar class="ms-auto">
-      <NavItem>
-        <NavLink href="https://github.com/alucryd/fraiskm">
-          <Fa icon={faGithub} />
-          Contribuer
-        </NavLink>
-      </NavItem>
-      <NavItem>
-        <NavLink href="https://github.com/alucryd/fraiskm/issues">
-          <Fa icon={faBug} />
-          Signaler
-        </NavLink>
-      </NavItem>
-      <NavItem>
-        <NavLink href="https://github.com/sponsors/alucryd">
-          <Fa icon={faHeart} />
-          Sponsoriser
-        </NavLink>
-      </NavItem>
-    </Nav>
+    <NavbarBrand href="/">Copyright &copy; 2021 Maxime Gauduin</NavbarBrand>
+    <NavbarToggler on:click={() => (isLowerNavOpen = !isLowerNavOpen)} />
+    <Collapse isOpen={isLowerNavOpen} navbar expand="md" on:update={handleLowerNavUpdate}>
+      <Nav navbar class="ms-auto">
+        <NavItem>
+          <NavLink href="https://github.com/alucryd/fraiskm">
+            <Fa icon={faGithub} />
+            Contribuer
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="https://github.com/alucryd/fraiskm/issues">
+            <Fa icon={faBug} />
+            Signaler
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="https://github.com/sponsors/alucryd">
+            <Fa icon={faHeart} />
+            Sponsoriser
+          </NavLink>
+        </NavItem>
+      </Nav>
+    </Collapse>
   </Navbar>
 </div>
+
+<style>
+  :global(thead) {
+    display: none !important;
+  }
+
+  :global(tfoot) {
+    display: none !important;
+  }
+
+  :global(.table > :not(:first-child)) {
+    border-top-width: 1px !important;
+    border-top-color: inherit !important;
+  }
+</style>
