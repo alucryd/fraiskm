@@ -14,9 +14,9 @@
       id: undefined,
       name: "",
       limitDistance: true,
-      defaultVehicleId: undefined,
-      defaultFromId: undefined,
-      defaultToId: undefined,
+      defaultVehicleId: null,
+      defaultFromId: null,
+      defaultToId: null,
     };
   };
 
