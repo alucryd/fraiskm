@@ -403,7 +403,7 @@ pub async fn delete_driver_by_id(connection: &mut PgConnection, id: &Uuid) -> u6
     .rows_affected()
 }
 
-pub async fn create_distance(
+pub async fn create_or_update_distance(
     connection: &mut PgConnection,
     from_id: &Uuid,
     to_id: &Uuid,
@@ -412,42 +412,17 @@ pub async fn create_distance(
     sqlx::query!(
         "
         INSERT INTO distances (from_id, to_id, meters)
-        VALUES ($1, $2, $3)",
+        VALUES ($1, $2, $3)
+        ON CONFLICT (from_id, to_id)
+        DO UPDATE SET meters = $4",
         from_id,
         to_id,
+        meters,
         meters,
     )
     .execute(connection)
     .await
     .expect("Error while creating distance")
-    .rows_affected()
-}
-
-pub async fn update_distance(
-    connection: &mut PgConnection,
-    from_id: &Uuid,
-    to_id: &Uuid,
-    meters: i32,
-) -> u64 {
-    sqlx::query!(
-        "
-        UPDATE distances
-        SET meters = $3
-        WHERE from_id = $1
-        AND to_id = $2
-        ",
-        from_id,
-        to_id,
-        meters,
-    )
-    .execute(connection)
-    .await
-    .unwrap_or_else(|_| {
-        panic!(
-            "Error while updating distance with ids {} and {}",
-            from_id, to_id
-        )
-    })
     .rows_affected()
 }
 
@@ -539,6 +514,33 @@ pub async fn update_journey(
     .rows_affected()
 }
 
+pub async fn find_journeys_by_driver_id_and_year(
+    connection: &mut PgConnection,
+    driver_id: &Uuid,
+    year: i16,
+) -> Vec<Journey> {
+    sqlx::query_as!(
+        Journey,
+        "
+        SELECT *
+        FROM journeys
+        WHERE driver_id = $1
+        AND extract(year FROM date) = $2
+        ORDER BY date
+        ",
+        driver_id,
+        BigDecimal::from(year),
+    )
+    .fetch_all(connection)
+    .await
+    .unwrap_or_else(|_| {
+        panic!(
+            "Error while finding journeys with driver id {} and year {}",
+            driver_id, year
+        )
+    })
+}
+
 pub async fn find_journeys_by_driver_id_and_year_and_month(
     connection: &mut PgConnection,
     driver_id: &Uuid,
@@ -613,103 +615,4 @@ pub async fn find_scale_by_year_and_horsepower_and_vehicle_type(
             year, horsepower, vehicle_type
         )
     })
-}
-
-pub async fn compute_total_distance_by_date_and_driver_id_and_vehicle_id(
-    connection: &mut PgConnection,
-    date: &NaiveDate,
-    driver_id: &Uuid,
-    vehicle_id: &Uuid,
-    journey_id: &Option<Uuid>,
-) -> i64 {
-    match journey_id {
-        Some(journey_id) => sqlx::query_as!(
-            RowInteger,
-            "
-            SELECT COALESCE(SUM(d.meters), 0) AS total
-            FROM journeys j
-            JOIN distances d
-            ON j.from_id = d.from_id
-            AND j.to_id = d.to_id
-            WHERE j.date = $1
-            AND j.driver_id = $2
-            AND j.vehicle_id = $3
-            AND j.id != $4
-            ",
-            date,
-            driver_id,
-            vehicle_id,
-            journey_id,
-        )
-        .fetch_one(connection)
-        .await
-        .unwrap_or_else(|_| {
-            panic!(
-            "Error while computing total distance with date {} and driver_id {} and vehicle_id {}",
-            date, driver_id, vehicle_id
-        )
-        })
-        .total
-        .unwrap(),
-        None => sqlx::query_as!(
-            RowInteger,
-            "
-            SELECT COALESCE(SUM(d.meters), 0) AS total
-            FROM journeys j
-            JOIN distances d
-            ON j.from_id = d.from_id
-            AND j.to_id = d.to_id
-            WHERE j.date = $1
-            AND j.driver_id = $2
-            AND j.vehicle_id = $3
-            ",
-            date,
-            driver_id,
-            vehicle_id,
-        )
-        .fetch_one(connection)
-        .await
-        .unwrap_or_else(|_| {
-            panic!(
-            "Error while computing total distance with date {} and driver_id {} and vehicle_id {}",
-            date, driver_id, vehicle_id
-        )
-        })
-        .total
-        .unwrap(),
-    }
-}
-
-pub async fn compute_total_distance_by_year_and_driver_id_and_vehicle_id(
-    connection: &mut PgConnection,
-    year: i16,
-    driver_id: &Uuid,
-    vehicle_id: &Uuid,
-) -> i64 {
-    sqlx::query_as!(
-        RowInteger,
-        "
-        SELECT COALESCE(SUM(d.meters), 0) AS total
-        FROM journeys j
-        JOIN distances d
-        ON j.from_id = d.from_id
-        AND j.to_id = d.to_id
-        WHERE extract(year FROM j.date) = $1
-        AND j.driver_id = $2
-        AND j.vehicle_id = $3
-        ",
-        BigDecimal::from(year),
-        driver_id,
-        vehicle_id,
-    )
-    .fetch_one(connection)
-    .await
-    .unwrap_or_else(|_| {
-        panic!(
-            "Error while computing total distance with year {} and driver_id {} and vehicle_id {}",
-            year, driver_id, vehicle_id
-        )
-    })
-    .total
-    .unwrap()
 }

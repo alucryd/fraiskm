@@ -6,11 +6,13 @@
     faCalendarDay,
     faCar,
     faClone,
+    faEuroSign,
     faGaugeHigh,
     faLongArrowRight,
     faPen,
     faPlus,
     faSignsPost,
+    faSquareRootVariable,
     faTimes,
     faUser,
   } from "@fortawesome/free-solid-svg-icons";
@@ -23,7 +25,7 @@
   import JourneyModal from "../components/JourneyModal.svelte";
   import Transition from "../components/Transition.svelte";
   import { deleteJourney } from "../mutation.js";
-  import { getDistance, getJourneys } from "../query.js";
+  import { getDistance, getJourneys, getTotals } from "../query.js";
   import {
     addresses,
     drivers,
@@ -37,6 +39,7 @@
     journeyYear,
     journeys,
     ready,
+    totals,
     vehicles,
   } from "../store.js";
 
@@ -56,7 +59,7 @@
     [12, "Décembre"],
   ];
 
-  const newJourney = (driverId) => {
+  const newJourney = async (driverId) => {
     const driver = getDriverById(driverId);
     return {
       id: undefined,
@@ -64,7 +67,8 @@
       vehicleId: driver.defaultVehicleId,
       fromId: driver.defaultFromId,
       toId: driver.defaultToId,
-      meters: driver.defaultFromId && driver.defaultToId ? getDistance(driver.defaultFromId, driver.defaultToId) : 0,
+      meters:
+        driver.defaultFromId && driver.defaultToId ? await getDistance(driver.defaultFromId, driver.defaultToId) : 0,
       roundTrip: true,
     };
   };
@@ -74,6 +78,7 @@
     journey = $journeyDriverId ? newJourney($journeyDriverId) : undefined;
   }
   $: (async () => $journeyDriverId && (await getJourneys($journeyDriverId, $journeyYear, $journeyMonth)))();
+  $: (async () => $journeyDriverId && (await getTotals($journeyDriverId, $journeyYear)))();
 
   const toggleJourneyModal = (object) => {
     journey = object;
@@ -98,12 +103,12 @@
 
   const addVehicle = async (event) => {
     event.preventDefault();
-    goto("/drivers", { replaceState: false });
+    goto("/vehicles", { replaceState: false });
   };
 
   const addAddress = async (event) => {
     event.preventDefault();
-    goto("/drivers", { replaceState: false });
+    goto("/addresses", { replaceState: false });
   };
 </script>
 
@@ -161,6 +166,30 @@
       </Row>
       <Row class="mt-3">
         <Col>
+          <Table responsive rows={$totals} let:row class="align-middle">
+            <Column width="2.5rem">
+              <Fa icon={faCar} />
+            </Column>
+            <Column>
+              {getVehicleById(row.vehicleId).model}
+            </Column>
+            <Column width="2.5rem">
+              <Fa icon={faSquareRootVariable} />
+            </Column>
+            <Column>
+              {row.formula}
+            </Column>
+            <Column width="2.5rem">
+              <Fa icon={faEuroSign} />
+            </Column>
+            <Column>
+              {row.total / 100}
+            </Column>
+          </Table>
+        </Col>
+      </Row>
+      <Row>
+        <Col>
           <Table responsive rows={$journeys} let:row class="align-middle">
             <Column width="2.5rem">
               <Fa icon={faCalendarDay} />
@@ -192,7 +221,7 @@
             <Column style="text-align: left;">
               {row.meters / 1000}km
               {#if row.roundTrip}
-                <sup>x2</sup>
+                <span class="badge badge-dark">x2</span>
               {/if}
             </Column>
             <Column width="7.5rem" class="text-center">
@@ -214,7 +243,7 @@
       {#if $journeyDriverId}
         <Row class="flex-row-reverse">
           <Col class="flex-grow-0">
-            <Button color="dark" on:click={() => toggleJourneyModal(newJourney($journeyDriverId))}>
+            <Button color="dark" on:click={async () => toggleJourneyModal(await newJourney($journeyDriverId))}>
               <Fa icon={faPlus} />
             </Button>
           </Col>
@@ -224,7 +253,10 @@
           toggle={() => toggleJourneyModal(newJourney($journeyDriverId))}
           kilometers={journey.meters / 1000}
         />
-        <JourneyDuplicateModal {journey} toggle={() => toggleJourneyDuplicateModal(newJourney($journeyDriverId))} />
+        <JourneyDuplicateModal
+          {journey}
+          toggle={async () => toggleJourneyDuplicateModal(await newJourney($journeyDriverId))}
+        />
       {/if}
     {/if}
   {/if}

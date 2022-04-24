@@ -9,6 +9,7 @@ export const drivers = writable([]);
 export const vehicles = writable([]);
 export const addresses = writable([]);
 export const journeys = writable([]);
+export const totals = writable([]);
 
 export const getDriverById = (id) => get(drivers).find((driver) => driver.id == id);
 export const getVehicleById = (id) => get(vehicles).find((vehicle) => vehicle.id == id);

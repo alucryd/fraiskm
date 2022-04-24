@@ -212,24 +212,19 @@ export async function deleteAddress(address) {
   await graphQLClient.request(mutation, address);
 }
 
-export async function createDistance(distance) {
+export async function createOrUpdateDistance(fromId, toId, meters) {
   const mutation = gql`
-    mutation CreateDistance($fromId: ID!, $toId: ID!, $meters: Int!) {
-      createDistance(fromId: $fromId, toId: $toId, meters: $meters)
+    mutation CreateOrUpdateDistance($fromId: ID!, $toId: ID!, $meters: Int!) {
+      createOrUpdateDistance(fromId: $fromId, toId: $toId, meters: $meters)
     }
   `;
 
-  await graphQLClient.request(mutation, distance);
-}
-
-export async function updateDistance(distance) {
-  const mutation = gql`
-    mutation UpdateDistance($fromId: ID!, $toId: ID!, $meters: Int!) {
-      updateDistance(fromId: $fromId, toId: $toId, meters: $meters)
-    }
-  `;
-
-  await graphQLClient.request(mutation, distance);
+  const variables = {
+    fromId,
+    toId,
+    meters,
+  };
+  await graphQLClient.request(mutation, variables);
 }
 
 export async function createJourney(journey) {

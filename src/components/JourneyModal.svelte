@@ -24,8 +24,8 @@
     Tooltip,
   } from "sveltestrap";
 
-  import { createJourney, updateJourney } from "../mutation.js";
-  import { getJourneys } from "../query.js";
+  import { createJourney, createOrUpdateDistance, updateJourney } from "../mutation.js";
+  import { getJourneys, getTotals } from "../query.js";
   import { addresses, isJourneyModalOpen, journeyMonth, journeyYear, vehicles } from "../store.js";
 
   export let toggle = undefined;
@@ -44,6 +44,7 @@
   const onSubmit = async (event) => {
     event.preventDefault();
     try {
+      await createOrUpdateDistance(journey.fromId, journey.toId, journey.meters);
       if (journey.id) {
         await updateJourney(journey);
       } else {
@@ -62,6 +63,7 @@
           $journeyMonth = month;
         }
       }
+      await getTotals(journey.driverId, $journeyYear);
       $isJourneyModalOpen = false;
     } catch (error) {
       errorMessage = error.response.errors[0].message;

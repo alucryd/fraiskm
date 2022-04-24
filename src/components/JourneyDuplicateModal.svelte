@@ -16,7 +16,7 @@
   } from "sveltestrap";
 
   import { createJourney } from "../mutation.js";
-  import { getJourneys } from "../query.js";
+  import { getJourneys, getTotals } from "../query.js";
   import { isJourneyDuplicateModalOpen, journeyMonth, journeyYear } from "../store.js";
 
   export let toggle = undefined;
@@ -54,6 +54,7 @@
           $journeyMonth = month;
         }
       }
+      await getTotals(journey.driverId, $journeyYear);
       $isJourneyDuplicateModalOpen = false;
     } catch (error) {
       errorMessage = error.response.errors[0].message;

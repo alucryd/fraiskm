@@ -1,7 +1,7 @@
 import { gql } from "graphql-request";
 
 import { graphQLClient } from "./graphql.js";
-import { addresses, drivers, journeys, user, vehicles } from "./store.js";
+import { addresses, drivers, journeys, totals, user, vehicles } from "./store.js";
 
 export async function me() {
   const query = gql`
@@ -81,7 +81,7 @@ export async function getDistance(id0, id1) {
     id1,
   };
   const data = await graphQLClient.request(query, variables);
-  return data.meters ? data.meters : 0;
+  return data.distance.meters ? data.distance.meters : 0;
 }
 
 export async function getJourneys(driverId, year, month) {
@@ -107,4 +107,23 @@ export async function getJourneys(driverId, year, month) {
   };
   const data = await graphQLClient.request(query, variables);
   journeys.set(data.journeys);
+}
+
+export async function getTotals(driverId, year) {
+  const query = gql`
+    query Total($driverId: ID!, $year: Int!) {
+      totals(driverId: $driverId, year: $year) {
+        vehicleId
+        formula
+        total
+      }
+    }
+  `;
+
+  const variables = {
+    driverId,
+    year,
+  };
+  const data = await graphQLClient.request(query, variables);
+  totals.set(data.totals);
 }

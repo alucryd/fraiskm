@@ -3,6 +3,7 @@ use crate::model::*;
 use async_graphql::{Context, Error, Object, Result};
 use async_std::sync::{Arc, Mutex};
 use bigdecimal::{BigDecimal, ToPrimitive, Zero};
+use itertools::Itertools;
 use sqlx::postgres::PgPool;
 use std::cmp::{max, min};
 use tide::sessions::Session;
@@ -133,70 +134,91 @@ impl QueryRoot {
         .collect())
     }
 
-    async fn total(
+    async fn totals(
         &self,
         ctx: &Context<'_>,
         year: i16,
         driver_id: Uuid,
-        vehicle_id: Uuid,
-    ) -> Result<TotalObject> {
+    ) -> Result<Vec<TotalObject>> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        if session.get::<Uuid>("id").is_none() {
+        let user_id = session.get::<Uuid>("id");
+        if user_id.is_none() {
             return Err(Error::new("not logged in"));
         }
+        let mut totals = Vec::new();
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
-        let vehicle = find_vehicle_by_id(&mut connection, &vehicle_id).await;
-        let scale = find_scale_by_year_and_horsepower_and_vehicle_type(
-            &mut connection,
-            year,
-            vehicle.horsepower,
-            vehicle.vehicle_type,
-        )
-        .await;
-        let distance = compute_total_distance_by_year_and_driver_id_and_vehicle_id(
-            &mut connection,
-            year,
-            &driver_id,
-            &vehicle_id,
-        )
-        .await;
-        let mut formula = String::new();
-        let mut total = BigDecimal::zero();
-        let first_threshold = scale.first_threshold as i64 * 1000;
-        let second_threshold = scale.second_threshold as i64 * 1000;
-        let first_slice = min(distance, first_threshold);
-        formula += &format!("{} x {}", first_slice / 1000, scale.first_slice_multiplier);
-        total += scale.first_slice_multiplier * BigDecimal::from(first_slice);
-        if distance > first_threshold as i64 {
-            let second_slice = max(
-                distance - first_threshold,
-                second_threshold - first_threshold,
-            );
-            formula += &format!(
-                " + {} x {} + {}",
-                second_slice / 1000,
-                scale.second_slice_multiplier,
-                scale.second_slice_fixed_amount
-            );
-            total += scale.second_slice_multiplier * BigDecimal::from(second_slice)
-                + BigDecimal::from(scale.second_slice_fixed_amount)
+        let driver = find_driver_by_id(&mut connection, &driver_id).await;
+        let vehicles = find_vehicles_by_user_id(&mut connection, &user_id.unwrap()).await;
+        for vehicle in vehicles {
+            let scale = find_scale_by_year_and_horsepower_and_vehicle_type(
+                &mut connection,
+                year,
+                vehicle.horsepower,
+                vehicle.vehicle_type,
+            )
+            .await;
+            let journeys =
+                find_journeys_by_driver_id_and_year(&mut connection, &driver_id, year).await;
+            let mut distance: i64 = 0;
+            for (_, journeys) in &journeys.into_iter().group_by(|journey| journey.date) {
+                let meters: i32 = journeys
+                    .map(|journey| {
+                        if journey.round_trip {
+                            journey.meters * 2
+                        } else {
+                            journey.meters
+                        }
+                    })
+                    .sum();
+                distance += if driver.limit_distance {
+                    min(meters, 80000) as i64
+                } else {
+                    meters as i64
+                };
+            }
+            if distance == 0 {
+                continue;
+            }
+            let mut formula = String::new();
+            let mut total = BigDecimal::zero();
+            let first_threshold = scale.first_threshold as i64 * 1000;
+            let second_threshold = scale.second_threshold as i64 * 1000;
+            let first_slice = min(distance, first_threshold);
+            formula += &format!("{} x {}", first_slice / 1000, scale.first_slice_multiplier);
+            total += scale.first_slice_multiplier * BigDecimal::from(first_slice);
+            if distance > first_threshold as i64 {
+                let second_slice = max(
+                    distance - first_threshold,
+                    second_threshold - first_threshold,
+                );
+                formula += &format!(
+                    " + {} x {} + {}",
+                    second_slice / 1000,
+                    scale.second_slice_multiplier,
+                    scale.second_slice_fixed_amount
+                );
+                total += scale.second_slice_multiplier * BigDecimal::from(second_slice)
+                    + BigDecimal::from(scale.second_slice_fixed_amount)
+            }
+            if distance > second_threshold {
+                let third_slice = distance - second_threshold;
+                formula += &format!(
+                    " + {} x {}",
+                    third_slice / 1000,
+                    scale.third_slice_multiplier
+                );
+                total += scale.third_slice_multiplier * BigDecimal::from(third_slice)
+            }
+            if vehicle.electric {
+                total += &total / BigDecimal::from(5);
+            }
+            total = total / BigDecimal::from(10);
+            totals.push(TotalObject {
+                vehicle_id: vehicle.id,
+                formula,
+                total: total.to_i64().unwrap(),
+            });
         }
-        if distance > second_threshold {
-            let third_slice = distance - second_threshold;
-            formula += &format!(
-                " + {} x {}",
-                third_slice / 1000,
-                scale.third_slice_multiplier
-            );
-            total += scale.third_slice_multiplier * BigDecimal::from(third_slice)
-        }
-        if vehicle.electric {
-            total += &total / BigDecimal::from(5);
-        }
-        total = total / BigDecimal::from(10);
-        Ok(TotalObject {
-            formula,
-            total: total.to_i64().unwrap(),
-        })
+        Ok(totals)
     }
 }

@@ -1163,6 +1163,7 @@ dependencies = [
  "env_logger",
  "fancy-regex",
  "http-types",
+ "itertools",
  "lazy_static",
  "log",
  "mailchecker",
