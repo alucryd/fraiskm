@@ -1,9 +1,7 @@
-import { GraphQLClient, gql } from "graphql-request";
+import { gql } from "graphql-request";
 
-import { addresses, drivers, user, vehicles } from "./store.js";
-
-const endpoint = "/graphql";
-const graphQLClient = new GraphQLClient(endpoint);
+import { graphQLClient } from "./graphql.js";
+import { addresses, drivers, journeys, user, vehicles } from "./store.js";
 
 export async function me() {
   const query = gql`
@@ -18,20 +16,22 @@ export async function me() {
   user.set(data.me);
 }
 
-export async function getAddresses() {
+export async function getDrivers() {
   const query = gql`
     {
-      addresses {
+      drivers {
         id
-        title
-        label
-        addressType
+        name
+        limitDistance
+        defaultVehicleId
+        defaultFromId
+        defaultToId
       }
     }
   `;
 
   const data = await graphQLClient.request(query);
-  addresses.set(data.addresses);
+  drivers.set(data.drivers);
 }
 
 export async function getVehicles() {
@@ -51,20 +51,60 @@ export async function getVehicles() {
   vehicles.set(data.vehicles);
 }
 
-export async function getDrivers() {
+export async function getAddresses() {
   const query = gql`
     {
-      drivers {
+      addresses {
         id
-        name
-        limitDistance
-        defaultVehicleId,
-        defaultFromId,
-        defaultToId,
+        title
+        label
+        addressType
       }
     }
   `;
 
   const data = await graphQLClient.request(query);
-  drivers.set(data.drivers);
+  addresses.set(data.addresses);
+}
+
+export async function getDistance(id0, id1) {
+  const query = gql`
+    query Distance($id0: ID!, $id1: ID!) {
+      distance(id0: $id0, id1: $id1) {
+        meters
+      }
+    }
+  `;
+
+  const variables = {
+    id0,
+    id1,
+  };
+  const data = await graphQLClient.request(query, variables);
+  return data.meters ? data.meters : 0;
+}
+
+export async function getJourneys(driverId, year, month) {
+  const query = gql`
+    query Journeys($driverId: ID!, $year: Int!, $month: Int!) {
+      journeys(driverId: $driverId, year: $year, month: $month) {
+        id
+        fromId
+        toId
+        driverId
+        vehicleId
+        date
+        meters
+        roundTrip
+      }
+    }
+  `;
+
+  const variables = {
+    driverId,
+    year,
+    month,
+  };
+  const data = await graphQLClient.request(query, variables);
+  journeys.set(data.journeys);
 }

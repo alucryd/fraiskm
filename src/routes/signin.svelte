@@ -21,6 +21,7 @@
   import Transition from "../components/Transition.svelte";
   import { signin } from "../mutation.js";
   import { getAddresses, getDrivers, getVehicles } from "../query.js";
+  import { drivers, journeyDriverId, ready } from "../store";
 
   let username = "";
   let password = "";
@@ -34,9 +35,13 @@
     event.preventDefault();
     try {
       await signin(username, password);
-      await getAddresses();
       await getVehicles();
+      await getAddresses();
       await getDrivers();
+      if ($drivers.length) {
+        $journeyDriverId = $drivers[0].id;
+      }
+      $ready = true;
       goto("/", { replaceState: false });
     } catch (error) {
       errorMessage = error.response.errors[0].message;

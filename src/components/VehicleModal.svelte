@@ -15,7 +15,7 @@
     Tooltip,
   } from "sveltestrap";
 
-  import { addVehicle, updateVehicle } from "../mutation.js";
+  import { createVehicle, updateVehicle } from "../mutation.js";
   import { getVehicles } from "../query.js";
   import { isVehicleModalOpen } from "../store.js";
 
@@ -40,7 +40,7 @@
       if (vehicle.id) {
         await updateVehicle(vehicle);
       } else {
-        await addVehicle(vehicle);
+        await createVehicle(vehicle);
       }
       await getVehicles();
       $isVehicleModalOpen = false;

@@ -1,6 +1,6 @@
 use crate::database::*;
 use crate::model::*;
-use async_graphql::{ComplexObject, Context, Error, Object, Result};
+use async_graphql::{Context, Error, Object, Result};
 use async_std::sync::{Arc, Mutex};
 use bigdecimal::{BigDecimal, ToPrimitive, Zero};
 use sqlx::postgres::PgPool;
@@ -8,24 +8,6 @@ use std::cmp::{max, min};
 use tide::sessions::Session;
 use tindercrypt::cryptors::RingCryptor;
 use uuid::Uuid;
-
-#[ComplexObject]
-impl UserObject {}
-
-#[ComplexObject]
-impl DriverObject {
-    async fn journeys(&self, ctx: &Context<'_>, year: i16) -> Result<Vec<JourneyObject>> {
-        Ok(find_journeys_by_year_and_driver_id(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            year,
-            &self.id,
-        )
-        .await
-        .into_iter()
-        .map(|journey| JourneyObject::from_db(journey))
-        .collect())
-    }
-}
 
 pub struct QueryRoot;
 
@@ -117,8 +99,8 @@ impl QueryRoot {
     async fn distance(
         &self,
         ctx: &Context<'_>,
-        from_id: Uuid,
-        to_id: Uuid,
+        id0: Uuid,
+        id1: Uuid,
     ) -> Result<Option<DistanceObject>> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if session.get::<Uuid>("id").is_none() {
@@ -126,11 +108,29 @@ impl QueryRoot {
         }
         Ok(find_distance_by_ids(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &from_id,
-            &to_id,
+            (&id0, &id1),
         )
         .await
         .map(|distance| DistanceObject::from_db(distance)))
+    }
+
+    async fn journeys(
+        &self,
+        ctx: &Context<'_>,
+        driver_id: Uuid,
+        year: i16,
+        month: i8,
+    ) -> Result<Vec<JourneyObject>> {
+        Ok(find_journeys_by_driver_id_and_year_and_month(
+            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
+            &driver_id,
+            year,
+            month,
+        )
+        .await
+        .into_iter()
+        .map(|journey| JourneyObject::from_db(journey))
+        .collect())
     }
 
     async fn total(

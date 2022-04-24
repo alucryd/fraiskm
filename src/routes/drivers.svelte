@@ -12,11 +12,11 @@
   const newDriver = () => {
     return {
       id: undefined,
-      name: "",
+      name: undefined,
       limitDistance: true,
-      defaultVehicleId: null,
-      defaultFromId: null,
-      defaultToId: null,
+      defaultVehicleId: "",
+      defaultFromId: "",
+      defaultToId: "",
     };
   };
 
@@ -36,7 +36,7 @@
 
 <Transition>
   <Table responsive rows={$drivers} let:row class="align-middle">
-    <Column width="2.5rem" class="text-center">
+    <Column width="2.5rem">
       <Fa icon={faUser} />
     </Column>
     <Column>
@@ -58,7 +58,7 @@
       <Button color="dark" on:click={() => toggleDriverModal(newDriver())}>
         <Fa icon={faPlus} />
       </Button>
-      <DriverModal {driver} toggle={() => toggleDriverModal(newDriver())} />
     </Col>
   </Row>
+  <DriverModal {driver} toggle={() => toggleDriverModal(newDriver())} />
 </Transition>

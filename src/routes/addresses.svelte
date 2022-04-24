@@ -12,8 +12,8 @@
   const newAddress = () => {
     return {
       id: undefined,
-      title: "",
-      label: "",
+      title: undefined,
+      label: undefined,
       addressType: 0,
     };
   };
@@ -34,7 +34,7 @@
 
 <Transition>
   <Table responsive rows={$addresses} let:row class="align-middle">
-    <Column width="2.5rem" class="text-center">
+    <Column width="2.5rem">
       {#if row.addressType == 0}
         <Fa icon={faHome} />
       {:else}
@@ -60,7 +60,7 @@
       <Button color="dark" on:click={() => toggleAddressModal(newAddress())}>
         <Fa icon={faPlus} />
       </Button>
-      <AddressModal {address} toggle={() => toggleAddressModal(newAddress())} />
     </Col>
   </Row>
+  <AddressModal {address} toggle={() => toggleAddressModal(newAddress())} />
 </Transition>

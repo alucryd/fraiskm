@@ -5,9 +5,9 @@
     faBug,
     faCar,
     faHeart,
-    faMapMarkerAlt,
+    faLocationDot,
     faSignOutAlt,
-    faTachometerAlt,
+    faGaugeHigh,
     faUserCog,
     faUserEdit,
     faUsers,
@@ -34,7 +34,7 @@
   import UsernameModal from "../components/UsernameModal.svelte";
   import { signout } from "../mutation.js";
   import { getAddresses, getDrivers, getVehicles, me } from "../query.js";
-  import { user } from "../store.js";
+  import { drivers, journeyDriverId, ready, user } from "../store.js";
 
   let isUpperNavOpen = false;
 
@@ -61,13 +61,16 @@
   };
 
   onMount(async () => {
-    console.log($user);
     if (!$user) {
       try {
         await me();
-        await getAddresses();
         await getVehicles();
+        await getAddresses();
         await getDrivers();
+        if ($drivers.length) {
+          $journeyDriverId = $drivers[0].id;
+        }
+        $ready = true;
       } catch (error) {
         goto("/signin", { replaceState: true });
       }
@@ -78,7 +81,7 @@
 <div class="d-flex flex-column min-vh-100">
   <Navbar color="dark" dark expand="md" class="sticky-top mb-3">
     <NavbarBrand href="/">
-      <Fa icon={faTachometerAlt} />
+      <Fa icon={faGaugeHigh} />
       fraiskm
     </NavbarBrand>
     {#if $user}
@@ -86,9 +89,9 @@
       <Collapse isOpen={isUpperNavOpen} navbar expand="md" on:update={handleUpperNavUpdate}>
         <Nav navbar class="me-auto">
           <NavItem>
-            <NavLink href="/addresses">
-              <Fa icon={faMapMarkerAlt} />
-              Mes adresses
+            <NavLink href="/drivers">
+              <Fa icon={faUsers} />
+              Mes conducteurs
             </NavLink>
           </NavItem>
           <NavItem>
@@ -98,9 +101,9 @@
             </NavLink>
           </NavItem>
           <NavItem>
-            <NavLink href="/drivers">
-              <Fa icon={faUsers} />
-              Mes conducteurs
+            <NavLink href="/addresses">
+              <Fa icon={faLocationDot} />
+              Mes adresses
             </NavLink>
           </NavItem>
         </Nav>
@@ -138,7 +141,7 @@
   <PasswordModal isOpen={isPasswordModalOpen} toggle={togglePasswordModal} />
 
   <Navbar color="dark" dark expand="md" class="mt-3">
-    <NavbarBrand href="/">Copyright &copy; 2021 Maxime Gauduin</NavbarBrand>
+    <NavbarBrand href="/">Copyright &copy; {new Date().getFullYear()} Maxime Gauduin</NavbarBrand>
     <NavbarToggler on:click={() => (isLowerNavOpen = !isLowerNavOpen)} />
     <Collapse isOpen={isLowerNavOpen} navbar expand="md" on:update={handleLowerNavUpdate}>
       <Nav navbar class="ms-auto">

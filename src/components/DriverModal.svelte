@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { faCar, faFlagCheckered, faFont, faHome, faInfinity } from "@fortawesome/free-solid-svg-icons";
+  import {
+    faArrowRightFromBracket,
+    faArrowRightToBracket,
+    faCar,
+    faFont,
+    faInfinity,
+  } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
   import {
     Button,
@@ -15,7 +21,7 @@
     Tooltip,
   } from "sveltestrap";
 
-  import { addDriver, updateDriver } from "../mutation.js";
+  import { createDriver, updateDriver } from "../mutation.js";
   import { getDrivers } from "../query.js";
   import { addresses, isDriverModalOpen, vehicles } from "../store.js";
 
@@ -32,10 +38,19 @@
   const onSubmit = async (event) => {
     event.preventDefault();
     try {
+      if (!driver.defaultVehicleId) {
+        driver.defaultVehicleId = null;
+      }
+      if (!driver.defaultFromId) {
+        driver.defaultFromId = null;
+      }
+      if (!driver.defaultToId) {
+        driver.defaultToId = null;
+      }
       if (driver.id) {
         await updateDriver(driver);
       } else {
-        await addDriver(driver);
+        await createDriver(driver);
       }
       await getDrivers();
       $isDriverModalOpen = false;
@@ -95,31 +110,28 @@
       <FormGroup>
         <InputGroup>
           <InputGroupText>
-            <Fa icon={faHome} />
+            <Fa icon={faArrowRightFromBracket} />
           </InputGroupText>
           <Input type="select" name="default-from-id" id="default-from-id" bind:value={driver.defaultFromId}>
             {#each $addresses as address}
-              {#if address.addressType == 0}
-                <option value={address.id}>{address.title}</option>
-              {/if}
+              <option value={address.id} disabled={address.id == driver.defaultToId}>{address.title}</option>
             {/each}
           </Input>
-          <Tooltip target="default-from-id" placement="top">Adresse personnelle préféré</Tooltip>
+          <Tooltip target="default-from-id" placement="top">Adresse de départ préférée</Tooltip>
         </InputGroup>
       </FormGroup>
       <FormGroup>
         <InputGroup>
           <InputGroupText>
-            <Fa icon={faFlagCheckered} />
+            <Fa icon={faArrowRightToBracket} />
           </InputGroupText>
           <Input type="select" name="default-to-id" id="default-to-id" bind:value={driver.defaultToId}>
+            <option value="">Aucune</option>
             {#each $addresses as address}
-              {#if address.addressType == 1}
-                <option value={address.id}>{address.title}</option>
-              {/if}
+              <option value={address.id} disabled={address.id == driver.defaultFromId}>{address.title}</option>
             {/each}
           </Input>
-          <Tooltip target="default-to-id" placement="top">Adresse professionnelle préféré</Tooltip>
+          <Tooltip target="default-to-id" placement="top">Adresse d'arrivée préférée</Tooltip>
         </InputGroup>
       </FormGroup>
       <FormGroup>

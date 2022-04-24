@@ -185,7 +185,7 @@ impl Mutation {
         Ok(features.into_iter().map(|f| f.properties.label).collect())
     }
 
-    async fn add_address(
+    async fn create_address(
         &self,
         ctx: &Context<'_>,
         title: String,
@@ -245,7 +245,7 @@ impl Mutation {
         .await)
     }
 
-    async fn add_vehicle(
+    async fn create_vehicle(
         &self,
         ctx: &Context<'_>,
         model: String,
@@ -313,7 +313,7 @@ impl Mutation {
         .await)
     }
 
-    async fn add_driver(
+    async fn create_driver(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -425,19 +425,6 @@ impl Mutation {
         .await)
     }
 
-    async fn delete_distance(&self, ctx: &Context<'_>, from_id: Uuid, to_id: Uuid) -> Result<u64> {
-        let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
-        if session.get::<Uuid>("id").is_none() {
-            return Err(Error::new("not logged in"));
-        }
-        Ok(delete_distance_by_ids(
-            &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
-            &from_id,
-            &to_id,
-        )
-        .await)
-    }
-
     async fn create_journey(
         &self,
         ctx: &Context<'_>,
@@ -447,26 +434,27 @@ impl Mutation {
         vehicle_id: Uuid,
         date: NaiveDate,
         meters: i32,
-    ) -> Result<u64> {
+        round_trip: bool,
+    ) -> Result<Uuid> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if session.get::<Uuid>("id").is_none() {
             return Err(Error::new("not logged in"));
         }
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
         let driver = find_driver_by_id(&mut connection, &driver_id).await;
-        if driver.limit_distance {
-            let distance = compute_total_distance_by_date_and_driver_id_and_vehicle_id(
-                &mut connection,
-                &date,
-                &driver_id,
-                &vehicle_id,
-                &None,
-            )
-            .await;
-            if distance + meters as i64 > 80000 {
-                return Err(Error::new("distance above daily limit"));
-            }
-        }
+        // if driver.limit_distance {
+        //     let distance = compute_total_distance_by_date_and_driver_id_and_vehicle_id(
+        //         &mut connection,
+        //         &date,
+        //         &driver_id,
+        //         &vehicle_id,
+        //         &None,
+        //     )
+        //     .await;
+        //     if distance + meters as i64 > 80000 {
+        //         return Err(Error::new("distance above daily limit"));
+        //     }
+        // }
         Ok(create_journey(
             &mut connection,
             &from_id,
@@ -475,6 +463,7 @@ impl Mutation {
             &vehicle_id,
             &date,
             meters,
+            round_trip,
         )
         .await)
     }
@@ -489,6 +478,7 @@ impl Mutation {
         vehicle_id: Uuid,
         date: NaiveDate,
         meters: i32,
+        round_trip: bool,
     ) -> Result<u64> {
         let session = ctx.data_unchecked::<Arc<Mutex<Session>>>().lock().await;
         if session.get::<Uuid>("id").is_none() {
@@ -496,19 +486,19 @@ impl Mutation {
         }
         let mut connection = ctx.data_unchecked::<PgPool>().acquire().await.unwrap();
         let driver = find_driver_by_id(&mut connection, &driver_id).await;
-        if driver.limit_distance {
-            let distance = compute_total_distance_by_date_and_driver_id_and_vehicle_id(
-                &mut connection,
-                &date,
-                &driver_id,
-                &vehicle_id,
-                &Some(id),
-            )
-            .await;
-            if distance + meters as i64 > 80000 {
-                return Err(Error::new("distance above daily limit"));
-            }
-        }
+        // if driver.limit_distance {
+        //     let distance = compute_total_distance_by_date_and_driver_id_and_vehicle_id(
+        //         &mut connection,
+        //         &date,
+        //         &driver_id,
+        //         &vehicle_id,
+        //         &Some(id),
+        //     )
+        //     .await;
+        //     if distance + meters as i64 > 80000 {
+        //         return Err(Error::new("distance above daily limit"));
+        //     }
+        // }
         Ok(update_journey(
             &mut ctx.data_unchecked::<PgPool>().acquire().await.unwrap(),
             &id,
@@ -518,6 +508,7 @@ impl Mutation {
             &vehicle_id,
             &date,
             meters,
+            round_trip,
         )
         .await)
     }

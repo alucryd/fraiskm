@@ -12,7 +12,7 @@
   const newVehicle = () => {
     return {
       id: undefined,
-      model: "",
+      model: undefined,
       vehicleType: 0,
       electric: false,
       horsepower: 0,
@@ -35,7 +35,7 @@
 
 <Transition>
   <Table responsive rows={$vehicles} let:row class="align-middle">
-    <Column width="2.5rem" class="text-center">
+    <Column width="2.5rem">
       {#if row.vehicleType == 0}
         <Fa icon={faCar} />
       {:else}
@@ -61,7 +61,7 @@
       <Button color="dark" on:click={() => toggleVehicleModal(newVehicle())}>
         <Fa icon={faPlus} />
       </Button>
-      <VehicleModal {vehicle} toggle={() => toggleVehicleModal(newVehicle())} />
     </Col>
   </Row>
+  <VehicleModal {vehicle} toggle={() => toggleVehicleModal(newVehicle())} />
 </Transition>

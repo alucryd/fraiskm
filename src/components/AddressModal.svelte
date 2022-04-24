@@ -18,7 +18,7 @@
     Tooltip,
   } from "sveltestrap";
 
-  import { addAddress, normalizeAddress, updateAddress } from "../mutation.js";
+  import { createAddress, normalizeAddress, updateAddress } from "../mutation.js";
   import { getAddresses } from "../query.js";
   import { isAddressModalOpen } from "../store.js";
 
@@ -50,7 +50,7 @@
       if (address.id) {
         await updateAddress(address);
       } else {
-        await addAddress(address);
+        await createAddress(address);
       }
       await getAddresses();
       $isAddressModalOpen = false;

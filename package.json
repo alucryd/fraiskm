@@ -12,20 +12,20 @@
     "format": "prettier --write --plugin-search-dir=. ."
   },
   "devDependencies": {
-    "@fortawesome/free-brands-svg-icons": "^5.15.4",
-    "@fortawesome/free-regular-svg-icons": "^5.15.4",
-    "@fortawesome/free-solid-svg-icons": "^5.15.4",
-    "@sveltejs/adapter-static": "next",
-    "@sveltejs/kit": "next",
+    "@fortawesome/free-brands-svg-icons": "^6.1.1",
+    "@fortawesome/free-regular-svg-icons": "^6.1.1",
+    "@fortawesome/free-solid-svg-icons": "^6.1.1",
+    "@sveltejs/adapter-static": "1.0.0-next.28",
+    "@sveltejs/kit": "1.0.0-next.267",
     "@trivago/prettier-plugin-sort-imports": "^3.1.1",
-    "@typescript-eslint/eslint-plugin": "^4.31.1",
-    "@typescript-eslint/parser": "^4.31.1",
+    "@typescript-eslint/eslint-plugin": "^5.20.0",
+    "@typescript-eslint/parser": "^5.20.0",
     "bootstrap": "^5.1.3",
-    "eslint": "^7.32.0",
+    "eslint": "^8.13.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.1",
     "graphql": "^16.1.0",
-    "graphql-request": "^3.7.0",
+    "graphql-request": "^4.2.0",
     "prettier": "^2.4.1",
     "prettier-plugin-svelte": "^2.4.0",
     "svelte": "^3.44.0",
@@ -36,5 +36,9 @@
     "tslib": "^2.3.1",
     "typescript": "^4.4.3"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "date-fns": "^2.28.0",
+    "lodash-es": "^4.17.21"
+  }
 }

@@ -1,4 +1,5 @@
 use crate::model::*;
+use bigdecimal::BigDecimal;
 use chrono::NaiveDate;
 use sqlx::migrate::Migrator;
 use sqlx::postgres::{PgConnection, PgPool, PgPoolOptions};
@@ -452,8 +453,7 @@ pub async fn update_distance(
 
 pub async fn find_distance_by_ids(
     connection: &mut PgConnection,
-    from_id: &Uuid,
-    to_id: &Uuid,
+    ids: (&Uuid, &Uuid),
 ) -> Option<Distance> {
     sqlx::query_as!(
         Distance,
@@ -462,43 +462,20 @@ pub async fn find_distance_by_ids(
         FROM distances
         WHERE from_id = $1
         AND to_id = $2
+        OR to_id = $1
+        AND from_id = $2
         ",
-        from_id,
-        to_id,
+        ids.0,
+        ids.1,
     )
     .fetch_optional(connection)
     .await
     .unwrap_or_else(|_| {
         panic!(
             "Error while finding distance with ids {} and {}",
-            from_id, to_id
+            ids.0, ids.1
         )
     })
-}
-
-pub async fn delete_distance_by_ids(
-    connection: &mut PgConnection,
-    from_id: &Uuid,
-    to_id: &Uuid,
-) -> u64 {
-    sqlx::query!(
-        "
-        DELETE FROM distances
-        WHERE from_id = $1
-        AND to_id = $2
-        ",
-        from_id,
-        to_id,
-    )
-    .execute(connection)
-    .await
-    .unwrap_or_else(|_| {
-        panic!(
-            "Error while deleting distances with ids {} and {}",
-            from_id, to_id
-        )
-    })
-    .rows_affected()
 }
 
 pub async fn create_journey(
@@ -509,22 +486,25 @@ pub async fn create_journey(
     vehicle_id: &Uuid,
     date: &NaiveDate,
     meters: i32,
-) -> u64 {
+    round_trip: bool,
+) -> Uuid {
     sqlx::query!(
         "
-        INSERT INTO journeys (from_id, to_id, driver_id, vehicle_id, date, meters)
-        VALUES ($1, $2, $3, $4, $5, $6)",
+        INSERT INTO journeys (from_id, to_id, driver_id, vehicle_id, date, meters, round_trip)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id",
         from_id,
         to_id,
         driver_id,
         vehicle_id,
         date,
         meters,
+        round_trip
     )
-    .execute(connection)
+    .fetch_one(connection)
     .await
     .expect("Error while creating journey")
-    .rows_affected()
+    .id
 }
 
 pub async fn update_journey(
@@ -536,11 +516,12 @@ pub async fn update_journey(
     vehicle_id: &Uuid,
     date: &NaiveDate,
     meters: i32,
+    round_trip: bool,
 ) -> u64 {
     sqlx::query!(
         "
         UPDATE journeys
-        SET from_id = $2, to_id = $3, driver_id = $4, vehicle_id = $5, date = $6, meters = $7
+        SET from_id = $2, to_id = $3, driver_id = $4, vehicle_id = $5, date = $6, meters = $7, round_trip = $8
         WHERE id = $1
         ",
         id,
@@ -550,6 +531,7 @@ pub async fn update_journey(
         vehicle_id,
         date,
         meters,
+        round_trip
     )
     .execute(connection)
     .await
@@ -557,28 +539,32 @@ pub async fn update_journey(
     .rows_affected()
 }
 
-pub async fn find_journeys_by_year_and_driver_id(
+pub async fn find_journeys_by_driver_id_and_year_and_month(
     connection: &mut PgConnection,
-    year: i16,
     driver_id: &Uuid,
+    year: i16,
+    month: i8,
 ) -> Vec<Journey> {
     sqlx::query_as!(
         Journey,
         "
         SELECT *
         FROM journeys
-        WHERE extract(year FROM date) = $1
-        AND driver_id = $2
+        WHERE driver_id = $1
+        AND extract(year FROM date) = $2
+        AND extract(month FROM date) = $3
+        ORDER BY date
         ",
-        f64::from(year),
         driver_id,
+        BigDecimal::from(year),
+        BigDecimal::from(month),
     )
     .fetch_all(connection)
     .await
     .unwrap_or_else(|_| {
         panic!(
-            "Error while finding journeys with year {} and driver_id {}",
-            year, driver_id
+            "Error while finding journeys with driver id {} and year {} and month {}",
+            driver_id, year, month
         )
     })
 }
@@ -712,7 +698,7 @@ pub async fn compute_total_distance_by_year_and_driver_id_and_vehicle_id(
         AND j.driver_id = $2
         AND j.vehicle_id = $3
         ",
-        f64::from(year),
+        BigDecimal::from(year),
         driver_id,
         vehicle_id,
     )

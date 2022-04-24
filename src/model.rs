@@ -26,7 +26,6 @@ pub struct User {
 }
 
 #[derive(SimpleObject)]
-#[graphql(complex)]
 pub struct UserObject {
     pub username: String,
 }
@@ -173,27 +172,32 @@ pub struct Journey {
     pub vehicle_id: Uuid,
     pub date: NaiveDate,
     pub meters: i32,
+    pub round_trip: bool,
 }
 
 #[derive(SimpleObject)]
 pub struct JourneyObject {
+    pub id: Uuid,
     pub from_id: Uuid,
     pub to_id: Uuid,
     pub driver_id: Uuid,
     pub vehicle_id: Uuid,
     pub date: NaiveDate,
     pub meters: i32,
+    pub round_trip: bool,
 }
 
 impl JourneyObject {
     pub fn from_db(journey: Journey) -> JourneyObject {
         JourneyObject {
+            id: journey.id,
             from_id: journey.from_id,
             to_id: journey.to_id,
             driver_id: journey.driver_id,
             vehicle_id: journey.vehicle_id,
             date: journey.date,
             meters: journey.meters,
+            round_trip: journey.round_trip,
         }
     }
 }
