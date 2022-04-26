@@ -4,10 +4,11 @@
   import {
     faBug,
     faCar,
+    faGaugeHigh,
     faHeart,
     faLocationDot,
     faSignOutAlt,
-    faGaugeHigh,
+    faSignsPost,
     faUserCog,
     faUserEdit,
     faUsers,
@@ -34,7 +35,7 @@
   import UsernameModal from "../components/UsernameModal.svelte";
   import { signout } from "../mutation.js";
   import { getAddresses, getDrivers, getVehicles, me } from "../query.js";
-  import { drivers, journeyDriverId, ready, user } from "../store.js";
+  import { drivers, currentDriverId, ready, user } from "../store.js";
 
   let isUpperNavOpen = false;
 
@@ -68,7 +69,7 @@
         await getAddresses();
         await getDrivers();
         if ($drivers.length) {
-          $journeyDriverId = $drivers[0].id;
+          $currentDriverId = $drivers[0].id;
         }
         $ready = true;
       } catch (error) {
@@ -89,12 +90,6 @@
       <Collapse isOpen={isUpperNavOpen} navbar expand="md" on:update={handleUpperNavUpdate}>
         <Nav navbar class="me-auto">
           <NavItem>
-            <NavLink href="/drivers">
-              <Fa icon={faUsers} />
-              Mes conducteurs
-            </NavLink>
-          </NavItem>
-          <NavItem>
             <NavLink href="/vehicles">
               <Fa icon={faCar} />
               Mes véhicules
@@ -104,6 +99,18 @@
             <NavLink href="/addresses">
               <Fa icon={faLocationDot} />
               Mes adresses
+            </NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink href="/drivers">
+              <Fa icon={faUsers} />
+              Mes conducteurs
+            </NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink href="/journeys">
+              <Fa icon={faSignsPost} />
+              Mes trajets
             </NavLink>
           </NavItem>
         </Nav>

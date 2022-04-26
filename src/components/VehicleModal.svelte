@@ -89,10 +89,10 @@
             on:click={(event) => setVehicleType(event, 2)}
           >
             <Fa icon={faMotorcycle} /> &lt; 50 cm<sup>3</sup>
-            <Tooltip target="vehicle-type-1" placement="top"
-              >Deux roues de cylindrée inférieure à 50 cm<sup>3</sup></Tooltip
-            >
           </Button>
+          <Tooltip target="vehicle-type-1" placement="top"
+            >Deux roues de cylindrée inférieure à 50 cm<sup>3</sup></Tooltip
+          >
         </ButtonGroup>
       </FormGroup>
       <FormGroup>
@@ -124,6 +124,7 @@
           </InputGroupText>
           <Input type="number" name="horsepower" id="horsepower" bind:value={vehicle.horsepower} required />
           <InputGroupText>ch</InputGroupText>
+          <Tooltip target="horsepower" placement="top">Chevaux fiscaux</Tooltip>
         </InputGroup>
       </FormGroup>
       <FormGroup>

@@ -30,7 +30,7 @@ pub fn decode_key(key: &str) -> Vec<u8> {
 }
 
 pub fn encrypt_data(cryptor: &RingCryptor, key: &str, data: &str) -> Result<Vec<u8>, Error> {
-    Ok(cryptor.seal_with_key(&decode_key(&key), data.as_bytes())?)
+    cryptor.seal_with_key(&decode_key(key), data.as_bytes())
 }
 
 pub fn decrypt_data(cryptor: &RingCryptor, key: &str, data: &[u8]) -> Result<String, Error> {
@@ -43,11 +43,7 @@ pub fn reencrypt_data(
     new_key: &str,
     data: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    Ok(encrypt_data(
-        cryptor,
-        new_key,
-        &decrypt_data(cryptor, key, data)?,
-    )?)
+    encrypt_data(cryptor, new_key, &decrypt_data(cryptor, key, data)?)
 }
 
 pub async fn reencrypt_all_data(
@@ -66,8 +62,8 @@ pub async fn reencrypt_all_data(
         update_address(
             transaction,
             &address.id,
-            &reencrypt_data(cryptor, &key, &new_key, &address.title)?,
-            &reencrypt_data(cryptor, &key, &new_key, &address.label)?,
+            &reencrypt_data(cryptor, key, &new_key, &address.title)?,
+            &reencrypt_data(cryptor, key, &new_key, &address.label)?,
             address.address_type,
         )
         .await;
@@ -76,7 +72,7 @@ pub async fn reencrypt_all_data(
         update_driver(
             transaction,
             &driver.id,
-            &reencrypt_data(cryptor, &key, &new_key, &driver.name)?,
+            &reencrypt_data(cryptor, key, &new_key, &driver.name)?,
             driver.limit_distance,
             driver.default_vehicle_id.as_ref(),
             driver.default_from_id.as_ref(),
@@ -88,7 +84,7 @@ pub async fn reencrypt_all_data(
         update_vehicle(
             transaction,
             &vehicle.id,
-            &reencrypt_data(cryptor, &key, &new_key, &vehicle.model)?,
+            &reencrypt_data(cryptor, key, &new_key, &vehicle.model)?,
             vehicle.horsepower,
             vehicle.electric,
             vehicle.vehicle_type,

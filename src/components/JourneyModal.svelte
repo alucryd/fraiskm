@@ -26,7 +26,7 @@
 
   import { createJourney, createOrUpdateDistance, updateJourney } from "../mutation.js";
   import { getJourneys, getTotals } from "../query.js";
-  import { addresses, isJourneyModalOpen, journeyMonth, journeyYear, vehicles } from "../store.js";
+  import { addresses, isJourneyModalOpen, currentMonth, currentYear, vehicles } from "../store.js";
 
   export let toggle = undefined;
   export let journey = undefined;
@@ -53,17 +53,17 @@
       const date = parseISO(journey.date);
       const year = getYear(date);
       const month = getMonth(date) + 1;
-      if ($journeyYear == year && $journeyMonth == month) {
-        await getJourneys(journey.driverId, $journeyYear, $journeyMonth);
+      if ($currentYear == year && $currentMonth == month) {
+        await getJourneys(journey.driverId, $currentYear, $currentMonth);
       } else {
-        if ($journeyYear != year) {
-          $journeyYear = year;
+        if ($currentYear != year) {
+          $currentYear = year;
         }
-        if ($journeyMonth != month) {
-          $journeyMonth = month;
+        if ($currentMonth != month) {
+          $currentMonth = month;
         }
       }
-      await getTotals(journey.driverId, $journeyYear);
+      await getTotals(journey.driverId, $currentYear);
       $isJourneyModalOpen = false;
     } catch (error) {
       errorMessage = error.response.errors[0].message;

@@ -5,7 +5,7 @@ use async_std::sync::{Arc, Mutex};
 use bigdecimal::{BigDecimal, ToPrimitive, Zero};
 use itertools::Itertools;
 use sqlx::postgres::PgPool;
-use std::cmp::{max, min};
+use std::cmp::min;
 use tide::sessions::Session;
 use tindercrypt::cryptors::RingCryptor;
 use uuid::Uuid;
@@ -112,7 +112,7 @@ impl QueryRoot {
             (&id0, &id1),
         )
         .await
-        .map(|distance| DistanceObject::from_db(distance)))
+        .map(DistanceObject::from_db))
     }
 
     async fn journeys(
@@ -130,7 +130,7 @@ impl QueryRoot {
         )
         .await
         .into_iter()
-        .map(|journey| JourneyObject::from_db(journey))
+        .map(JourneyObject::from_db)
         .collect())
     }
 
@@ -152,7 +152,7 @@ impl QueryRoot {
         for vehicle in vehicles {
             let scale = find_scale_by_year_and_horsepower_and_vehicle_type(
                 &mut connection,
-                year,
+                year + 1,
                 vehicle.horsepower,
                 vehicle.vehicle_type,
             )
@@ -179,42 +179,33 @@ impl QueryRoot {
             if distance == 0 {
                 continue;
             }
-            let mut formula = String::new();
+            let mut formula;
             let mut total = BigDecimal::zero();
             let first_threshold = scale.first_threshold as i64 * 1000;
             let second_threshold = scale.second_threshold as i64 * 1000;
-            let first_slice = min(distance, first_threshold);
-            formula += &format!("{} x {}", first_slice / 1000, scale.first_slice_multiplier);
-            total += scale.first_slice_multiplier * BigDecimal::from(first_slice);
-            if distance > first_threshold as i64 {
-                let second_slice = max(
-                    distance - first_threshold,
-                    second_threshold - first_threshold,
-                );
-                formula += &format!(
-                    " + {} x {} + {}",
-                    second_slice / 1000,
+            if distance < first_threshold as i64 {
+                formula = format!("{} x {}", distance / 1000, scale.first_slice_multiplier);
+                total += scale.first_slice_multiplier * BigDecimal::from(distance / 1000);
+            } else if distance < second_threshold as i64 {
+                formula = format!(
+                    "{} x {} + {}",
+                    distance / 1000,
                     scale.second_slice_multiplier,
                     scale.second_slice_fixed_amount
                 );
-                total += scale.second_slice_multiplier * BigDecimal::from(second_slice)
+                total += scale.second_slice_multiplier * BigDecimal::from(distance / 1000)
                     + BigDecimal::from(scale.second_slice_fixed_amount)
-            }
-            if distance > second_threshold {
-                let third_slice = distance - second_threshold;
-                formula += &format!(
-                    " + {} x {}",
-                    third_slice / 1000,
-                    scale.third_slice_multiplier
-                );
-                total += scale.third_slice_multiplier * BigDecimal::from(third_slice)
+            } else {
+                formula = format!("{} x {}", distance / 1000, scale.third_slice_multiplier);
+                total += scale.third_slice_multiplier * BigDecimal::from(distance / 1000);
             }
             if vehicle.electric {
                 total += &total / BigDecimal::from(5);
+                formula = format!("({}) x 1.20", &formula);
             }
-            total = total / BigDecimal::from(10);
             totals.push(TotalObject {
                 vehicle_id: vehicle.id,
+                distance,
                 formula,
                 total: total.to_i64().unwrap(),
             });

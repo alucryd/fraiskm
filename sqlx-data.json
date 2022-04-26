@@ -129,56 +129,6 @@
       ]
     }
   },
-  "46831ddffcb6a5762157c950790c47494f941a6da2587ddb891ab23df43333d5": {
-    "query": "\n        SELECT *\n        FROM vehicles\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "model",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 2,
-          "name": "horsepower",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 3,
-          "name": "electric",
-          "type_info": "Bool"
-        },
-        {
-          "ordinal": 4,
-          "name": "vehicle_type",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 5,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "48390e2d21c954070cd2824ad8af161de7f1543182de2632b70a3aeee2d0aec7": {
     "query": "\n        UPDATE users\n        SET username = $2\n        WHERE id = $1\n        ",
     "describe": {
@@ -313,79 +263,8 @@
       "nullable": []
     }
   },
-  "66072c60d9fd22d3f3459344a288f13f8d17b26ac00d0b3c2c1b3312a36bc181": {
-    "query": "\n        SELECT *\n        FROM addresses\n        WHERE user_id = $1\n        ORDER BY address_type, title\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "title",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 2,
-          "name": "label",
-          "type_info": "Bytea"
-        },
-        {
-          "ordinal": 3,
-          "name": "address_type",
-          "type_info": "Int2"
-        },
-        {
-          "ordinal": 4,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "7451c182ae06da90593cca119396c4795015e259f4318c066d77fd1ec4e1625f": {
-    "query": "\n        UPDATE addresses\n        SET title = $2, label = $3, address_type = $4\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Bytea",
-          "Bytea",
-          "Int2"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "7511687b792d3c4fe6e9b6604c40df50864cc3b7c63b7154cc2e77da142217b5": {
-    "query": "\n        DELETE FROM journeys\n        WHERE id = $1\n        ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "7f27dd508c1c1492b373790ca9b627b090f90a6236218fdd31e14bcacfaff288": {
-    "query": "\n        SELECT *\n        FROM scales\n        WHERE year = $1\n        AND (\n            horsepower_min <= $2 OR horsepower_min IS NULL\n        ) AND (\n            horsepower_max >= $2 OR horsepower_max IS NULL\n        ) AND vehicle_type = $3\n        ",
+  "64c5acacbc1dbda0c58b8f76466da2961c46846a8fa295055ff0ded890720fb3": {
+    "query": "\n        SELECT *\n        FROM scales\n        WHERE year <= $1\n        AND (\n            horsepower_min <= $2 OR horsepower_min IS NULL\n        ) AND (\n            horsepower_max >= $2 OR horsepower_max IS NULL\n        ) AND vehicle_type = $3\n        ORDER BY year DESC\n        ",
     "describe": {
       "columns": [
         {
@@ -464,6 +343,77 @@
         false,
         false
       ]
+    }
+  },
+  "66072c60d9fd22d3f3459344a288f13f8d17b26ac00d0b3c2c1b3312a36bc181": {
+    "query": "\n        SELECT *\n        FROM addresses\n        WHERE user_id = $1\n        ORDER BY address_type, title\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 2,
+          "name": "label",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 3,
+          "name": "address_type",
+          "type_info": "Int2"
+        },
+        {
+          "ordinal": 4,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "7451c182ae06da90593cca119396c4795015e259f4318c066d77fd1ec4e1625f": {
+    "query": "\n        UPDATE addresses\n        SET title = $2, label = $3, address_type = $4\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bytea",
+          "Bytea",
+          "Int2"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "7511687b792d3c4fe6e9b6604c40df50864cc3b7c63b7154cc2e77da142217b5": {
+    "query": "\n        DELETE FROM journeys\n        WHERE id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
     }
   },
   "8fad2c4589a7f52d19948e77c9a05fdb367e0db5db3c5fea8b30dadbfdeb7f10": {

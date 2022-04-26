@@ -21,7 +21,7 @@
   import Transition from "../components/Transition.svelte";
   import { signin } from "../mutation.js";
   import { getAddresses, getDrivers, getVehicles } from "../query.js";
-  import { drivers, journeyDriverId, ready } from "../store";
+  import { drivers, currentDriverId, ready } from "../store";
 
   let username = "";
   let password = "";
@@ -39,7 +39,7 @@
       await getAddresses();
       await getDrivers();
       if ($drivers.length) {
-        $journeyDriverId = $drivers[0].id;
+        $currentDriverId = $drivers[0].id;
       }
       $ready = true;
       goto("/", { replaceState: false });

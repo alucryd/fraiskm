@@ -46,9 +46,8 @@ async fn main() {
         .get_matches();
 
     if matches.subcommand.is_some() {
-        match matches.subcommand_name() {
-            Some("server") => server::main(&matches.subcommand_matches("server").unwrap()).await,
-            _ => (),
+        if let Some("server") = matches.subcommand_name() {
+            server::main(matches.subcommand_matches("server").unwrap()).await
         }
     }
 }

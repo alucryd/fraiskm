@@ -17,7 +17,7 @@
 
   import { createJourney } from "../mutation.js";
   import { getJourneys, getTotals } from "../query.js";
-  import { isJourneyDuplicateModalOpen, journeyMonth, journeyYear } from "../store.js";
+  import { isJourneyDuplicateModalOpen, currentMonth, currentYear } from "../store.js";
 
   export let toggle = undefined;
   export let journey = undefined;
@@ -44,17 +44,17 @@
       await createJourney(journey);
       const year = getYear(end);
       const month = getMonth(end) + 1;
-      if ($journeyYear == year && $journeyMonth == month) {
-        await getJourneys(journey.driverId, $journeyYear, $journeyMonth);
+      if ($currentYear == year && $currentMonth == month) {
+        await getJourneys(journey.driverId, $currentYear, $currentMonth);
       } else {
-        if ($journeyYear != year) {
-          $journeyYear = year;
+        if ($currentYear != year) {
+          $currentYear = year;
         }
-        if ($journeyMonth != month) {
-          $journeyMonth = month;
+        if ($currentMonth != month) {
+          $currentMonth = month;
         }
       }
-      await getTotals(journey.driverId, $journeyYear);
+      await getTotals(journey.driverId, $currentYear);
       $isJourneyDuplicateModalOpen = false;
     } catch (error) {
       errorMessage = error.response.errors[0].message;

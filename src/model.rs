@@ -220,6 +220,7 @@ pub struct Scale {
 #[derive(SimpleObject)]
 pub struct TotalObject {
     pub vehicle_id: Uuid,
+    pub distance: i64,
     pub formula: String,
     pub total: i64,
 }

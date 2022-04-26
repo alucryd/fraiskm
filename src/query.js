@@ -81,7 +81,7 @@ export async function getDistance(id0, id1) {
     id1,
   };
   const data = await graphQLClient.request(query, variables);
-  return data.distance.meters ? data.distance.meters : 0;
+  return data.distance && data.distance.meters ? data.distance.meters : 0;
 }
 
 export async function getJourneys(driverId, year, month) {
@@ -114,6 +114,7 @@ export async function getTotals(driverId, year) {
     query Total($driverId: ID!, $year: Int!) {
       totals(driverId: $driverId, year: $year) {
         vehicleId
+        distance
         formula
         total
       }

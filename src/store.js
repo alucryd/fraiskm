@@ -1,4 +1,5 @@
 import { getMonth, getYear } from "date-fns";
+import { range } from "lodash-es";
 import { get, writable } from "svelte/store";
 
 export const ready = writable(false);
@@ -15,11 +16,27 @@ export const getDriverById = (id) => get(drivers).find((driver) => driver.id == 
 export const getVehicleById = (id) => get(vehicles).find((vehicle) => vehicle.id == id);
 export const getAddressById = (id) => get(addresses).find((address) => address.id == id);
 
+export const years = range(2020, new Date().getFullYear() + 1);
+export const months = [
+  [1, "Janvier"],
+  [2, "Février"],
+  [3, "Mars"],
+  [4, "Avril"],
+  [5, "Mai"],
+  [6, "Juin"],
+  [7, "Juillet"],
+  [8, "Août"],
+  [9, "Septembre"],
+  [10, "Octobre"],
+  [11, "Novembre"],
+  [12, "Décembre"],
+];
+
 const now = new Date();
 
-export const journeyDriverId = writable(undefined);
-export const journeyYear = writable(getYear(now));
-export const journeyMonth = writable(getMonth(now) + 1);
+export const currentYear = writable(getYear(now));
+export const currentMonth = writable(getMonth(now) + 1);
+export const currentDriverId = writable(undefined);
 
 export const isDriverModalOpen = writable(false);
 export const isVehicleModalOpen = writable(false);

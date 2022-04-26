@@ -40,7 +40,7 @@ pub fn subcommand<'a, 'b>() -> App<'a, 'b> {
 
 async fn serve_asset(request: tide::Request<()>) -> tide::Result {
     let file_path = request.param("path").map_or("index.html", |path| {
-        if path.split("/").last().unwrap().contains(".") {
+        if path.split('/').last().unwrap().contains('.') {
             path
         } else {
             "index.html"

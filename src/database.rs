@@ -255,21 +255,6 @@ pub async fn update_vehicle(
     .rows_affected()
 }
 
-pub async fn find_vehicle_by_id(connection: &mut PgConnection, id: &Uuid) -> Vehicle {
-    sqlx::query_as!(
-        Vehicle,
-        "
-        SELECT *
-        FROM vehicles
-        WHERE id = $1
-        ",
-        id
-    )
-    .fetch_one(connection)
-    .await
-    .unwrap_or_else(|_| panic!("Error while finding vehicle with id {}", id))
-}
-
 pub async fn find_vehicles_by_user_id(
     connection: &mut PgConnection,
     user_id: &Uuid,
@@ -596,12 +581,13 @@ pub async fn find_scale_by_year_and_horsepower_and_vehicle_type(
         "
         SELECT *
         FROM scales
-        WHERE year = $1
+        WHERE year <= $1
         AND (
             horsepower_min <= $2 OR horsepower_min IS NULL
         ) AND (
             horsepower_max >= $2 OR horsepower_max IS NULL
         ) AND vehicle_type = $3
+        ORDER BY year DESC
         ",
         year,
         horsepower,
