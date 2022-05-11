@@ -30,7 +30,7 @@
     passwordUppercaseRegex,
     signup,
   } from "../mutation.js";
-  import { getAddresses, getDrivers, getVehicles } from "../query.js";
+  import { ready } from "../store";
 
   let username = "";
   let passwordOne = "";
@@ -56,9 +56,7 @@
     event.preventDefault();
     try {
       await signup(username, passwordOne);
-      await getAddresses();
-      await getVehicles();
-      await getDrivers();
+      $ready = true;
       goto("/", { replaceState: false });
     } catch (error) {
       errorMessage = error.response.errors[0].message;

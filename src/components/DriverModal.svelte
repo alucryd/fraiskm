@@ -126,7 +126,6 @@
             <Fa icon={faArrowRightToBracket} />
           </InputGroupText>
           <Input type="select" name="default-to-id" id="default-to-id" bind:value={driver.defaultToId}>
-            <option value="">Aucune</option>
             {#each $addresses as address}
               <option value={address.id} disabled={address.id == driver.defaultFromId}>{address.title}</option>
             {/each}
